@@ -1,8 +1,9 @@
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+import * as THREE from 'three';
 
-import { OrbitControls } from 'https://unpkg.com/three-orbitcontrols@2.110.3/OrbitControls.js'
- 
-import { GLTFLoader } from 'https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js"
 
 
 //VARS
@@ -21,16 +22,17 @@ const renderer = new THREE.WebGLRenderer({
 
 //LOADERS
 const gltfLoader = new GLTFLoader()
+const rgbeLoader = new RGBELoader()
 const textureLoader = new THREE.TextureLoader()
 
 //TEXTURES
-const floorDiff = textureLoader.load('./static/textures/wood_floor_diff_2k.jpg')
-const floorNor = textureLoader.load('./static/textures/wood_floor_nor_gl_2k.jpg')
-const floorRough = textureLoader.load('./static/textures/wood_floor_rough_2k.jpg')
-const floorAO = textureLoader.load('./static/textures/wood_floor_ao_2k.jpg')
+const floorDiff = textureLoader.load('./textures/wood_floor_diff_2k.jpg')
+const floorNor = textureLoader.load('./textures/wood_floor_nor_gl_2k.jpg')
+const floorRough = textureLoader.load('./textures/wood_floor_rough_2k.jpg')
+const floorAO = textureLoader.load('./textures/wood_floor_ao_2k.jpg')
 
 //MODELS
-gltfLoader.load('./static/models/gltf/Scene_05.gltf', (gltf) => {
+gltfLoader.load('./models/gltf/Scene_05.gltf', (gltf) => {
     const gltfScene = gltf.scene
     let floor
     let wall_00
@@ -53,85 +55,85 @@ gltfLoader.load('./static/models/gltf/Scene_05.gltf', (gltf) => {
     let title_05
     let title_06
     gltfScene.traverse(item => {
-    //    console.log("No way", item.name)
+        //    console.log("No way", item.name)
         if (item.name === 'Floor') {
-             console.log(item.name)
+            console.log(item.name)
             floor = item
         }
         else if (item.name === 'Wall_00') {
-             console.log(item.name)
+            console.log(item.name)
             wall_00 = item
         }
         else if (item.name === 'light_00') {
-             console.log(item.name)
+            console.log(item.name)
             light_00 = item
         }
         else if (item.name === 'light_01') {
-             console.log(item.name)
+            console.log(item.name)
             light_01 = item
         }
         else if (item.name === 'light_02') {
-             console.log(item.name)
+            console.log(item.name)
             light_02 = item
         }
         else if (item.name === 'roof') {
-             console.log(item.name)
+            console.log(item.name)
             roof = item
         }
         else if (item.name === 'painting_00') {
-             console.log(item.name)
+            console.log(item.name)
             painting_00 = item
         }
         else if (item.name === 'painting_01') {
-             console.log(item.name)
+            console.log(item.name)
             painting_01 = item
         }
         else if (item.name === 'painting_02') {
-             console.log(item.name)
+            console.log(item.name)
             painting_02 = item
         }
         else if (item.name === 'painting_03') {
-             console.log(item.name)
+            console.log(item.name)
             painting_03 = item
         }
         else if (item.name === 'painting_04') {
-             console.log(item.name)
+            console.log(item.name)
             painting_04 = item
         }
         else if (item.name === 'painting_05') {
-             console.log(item.name)
+            console.log(item.name)
             painting_05 = item
         }
         else if (item.name === 'painting_06') {
-             console.log(item.name)
+            console.log(item.name)
             painting_06 = item
         }
         else if (item.name === 'title_00') {
-             console.log(item.name)
+            console.log(item.name)
             title_00 = item
         }
         else if (item.name === 'title_01') {
-             console.log(item.name)
+            console.log(item.name)
             title_01 = item
         }
         else if (item.name === 'title_02') {
-             console.log(item.name)
+            console.log(item.name)
             title_02 = item
         }
         else if (item.name === 'title_03') {
-             console.log(item.name)
+            console.log(item.name)
             title_03 = item
         }
         else if (item.name === 'title_04') {
-             console.log(item.name)
+            console.log(item.name)
             title_04 = item
         }
         else if (item.name === 'title_05') {
-             console.log(item.name)
+            console.log(item.name)
             title_05 = item
         }
         else if (item.name === 'title_06') {
-             console.log(item.name)
+            console.log(item.name)
             title_06 = item
         }
 
