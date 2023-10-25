@@ -1,9 +1,8 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
-import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js'
+import { OrbitControls } from 'https://unpkg.com/three-orbitcontrols@2.110.3/OrbitControls.js'
  
-import { GLTFLoader } from '../node_modules/three/examples/jsm/loaders/GLTFLoader.js'
-import { RGBELoader } from "../node_modules/three/examples/jsm/loaders/RGBELoader.js"
+import { GLTFLoader } from 'https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js'
 
 
 //VARS
@@ -22,7 +21,6 @@ const renderer = new THREE.WebGLRenderer({
 
 //LOADERS
 const gltfLoader = new GLTFLoader()
-const rgbeLoader = new RGBELoader()
 const textureLoader = new THREE.TextureLoader()
 
 //TEXTURES
