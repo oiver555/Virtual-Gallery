@@ -25,13 +25,13 @@ const rgbeLoader = new RGBELoader()
 const textureLoader = new THREE.TextureLoader()
 
 //TEXTURES
-const floorDiff = textureLoader.load('./textures/wood_floor_diff_2k.jpg')
-const floorNor = textureLoader.load('./textures/wood_floor_nor_gl_2k.jpg')
-const floorRough = textureLoader.load('./textures/wood_floor_rough_2k.jpg')
-const floorAO = textureLoader.load('./textures/wood_floor_ao_2k.jpg')
+const floorDiff = textureLoader.load('../static/textures/wood_floor_diff_2k.jpg')
+const floorNor = textureLoader.load('../static/textures/wood_floor_nor_gl_2k.jpg')
+const floorRough = textureLoader.load('../static/textures/wood_floor_rough_2k.jpg')
+const floorAO = textureLoader.load('../static/textures/wood_floor_ao_2k.jpg')
 
 //MODELS
-gltfLoader.load('./models/gltf/Scene_05.gltf', (gltf) => {
+gltfLoader.load('../static/models/gltf/Scene_05.gltf', (gltf) => {
     const gltfScene = gltf.scene
     let floor
     let wall_00
