@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js'
-import * as dat from 'lil-gui'
+ 
 import { GLTFLoader } from '../node_modules/three/examples/jsm/loaders/GLTFLoader.js'
 import { RGBELoader } from "../node_modules/three/examples/jsm/loaders/RGBELoader.js"
 
