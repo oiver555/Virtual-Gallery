@@ -10,11 +10,18 @@ import * as CANNON from 'cannon-es'
 import CannonDebugger from 'cannon-es-debugger';
 import { threeToCannon, ShapeType, } from 'three-to-cannon';
 
-import {PointerLockControlsCannon} from './PointerLockControlsCannon.js'
+import { PointerLockControlsCannon } from './PointerLockControlsCannon.js'
 
 
 //VARS
 const canvas = document.querySelector('canvas.webgl')
+let bench_grp
+let white_wall_grp
+let color_wall_grp
+let light_grp
+let stands_grp
+let floor_grp
+let iron_grid_grp
 let sphereBody
 let physicsMaterial
 const timeStep = 1 / 60
@@ -36,8 +43,8 @@ const cannonPhysics = new CANNON.World({
 
 physicsMaterial = new CANNON.Material('physics')
 const physics_physics = new CANNON.ContactMaterial(physicsMaterial, physicsMaterial, {
-  friction: 0.0,
-  restitution: 0.3,
+    friction: 0.0,
+    restitution: 0.3,
 })
 
 // We must add the contact materials to the world
@@ -59,14 +66,14 @@ let debugFunc = {
     printOribitTargetPos,
 }
 
-gui.add(camera.position, "x").name("Position X")
-gui.add(camera.position, "y").name("Position Y")
-gui.add(camera.position, "z").name("Position Z")
-gui.add(camera.rotation, "x").name("Rotation X")
-gui.add(camera.rotation, "y").name("Rotation Y")
-gui.add(camera.rotation, "z").name("Rotation Z")
-gui.add(debugFunc, "printCamPos").name("Camera Position")
-gui.add(debugFunc, "printOribitTargetPos").name("Orbit Target Position")
+// gui.add(camera.position, "x").name("Position X")
+// gui.add(camera.position, "y").name("Position Y")
+// gui.add(camera.position, "z").name("Position Z")
+// gui.add(camera.rotation, "x").name("Rotation X")
+// gui.add(camera.rotation, "y").name("Rotation Y")
+// gui.add(camera.rotation, "z").name("Rotation Z")
+// gui.add(debugFunc, "printCamPos").name("Camera Position")
+// gui.add(debugFunc, "printOribitTargetPos").name("Orbit Target Position")
 
 //LOADERS
 const gltfLoader = new GLTFLoader()
@@ -85,145 +92,58 @@ const painting_00_Material = new THREE.MeshStandardMaterial({
 })
 
 
-
-//MODELS
-gltfLoader.load('./models/gltf/Scene_05.gltf', (gltf) => {
-    const gltfScene = gltf.scene
-    let wall_1
-    let wall_2
-    let wall_3
-    let wall_4
-    let roof
-    let floor
-    let light_00
-    let light_01
-    let light_02
-    let painting_00
-    let painting_01
-    let painting_02
-    let painting_03
-    let painting_04
-    let painting_05
-    let painting_06
-    let title_00
-    let title_01
-    let title_02
-    let title_03
-    let title_04
-    let title_05
-    let title_06
-    let window
-
-    gltfScene.traverse(item => {
-        // console.log(item.name)
-        if (item.name === 'Floor') {
-            floor = item
-            // floor.rotation.x = Math.PI
-        }
-        else if (item.name === 'window') {
-            window = item
-        }
-        else if (item.name === 'wall_1') {
-            // console.log(item)
-              wall_1 = item
-        }
-        else if (item.name === 'wall_2') {
-            //  console.log(item)
-              wall_2 = item
-        }
-        else if (item.name === 'wall_3') {
-        //    console.log(item)
-              wall_3 = item
-        }
-        else if (item.name === 'wall_4') {
-            // console.log(item)
-            wall_4 = item
-        }
-        else if (item.name === 'light_00') {
-            light_00 = item
-        }
-        else if (item.name === 'light_01') {
-            light_01 = item
-        }
-        else if (item.name === 'light_02') {
-            light_02 = item
-        }
-        else if (item.name === 'roof') {
-            roof = item
-        }
-        else if (item.name === 'painting_00') {
-            painting_00 = item
-            painting_00.material = painting_00_Material
-            painting_00.scale.y = -1 * painting_00.scale.y
-        }
-        else if (item.name === 'painting_01') {
-            painting_01 = item
-        }
-        else if (item.name === 'painting_02') {
-            painting_02 = item
-        }
-        else if (item.name === 'painting_03') {
-            painting_03 = item
-        }
-        else if (item.name === 'painting_04') {
-            painting_04 = item
-        }
-        else if (item.name === 'painting_05') {
-            painting_05 = item
-        }
-        else if (item.name === 'painting_06') {
-            painting_06 = item
-        }
-        else if (item.name === 'title_00') {
-            title_00 = item
-        }
-        else if (item.name === 'title_01') {
-            title_01 = item
-        }
-        else if (item.name === 'title_02') {
-            title_02 = item
-        }
-        else if (item.name === 'title_03') {
-            title_03 = item
-        }
-        else if (item.name === 'title_04') {
-            title_04 = item
-        }
-        else if (item.name === 'title_05') {
-            title_05 = item
-        }
-        else if (item.name === 'title_06') {
-            title_06 = item
-        }
-
+const toggleWireframe = (groups) => {
+    groups.forEach(group => {
+        group.traverse(item => {
+            if (item.isMesh) {
+                item.material = wireframeMaterial
+            }
+        })
     })
 
-    scene.add(floor,
-        wall_1,
-        wall_2,
-        wall_3,
-        wall_4,
-        light_00,
-        light_01,
-        light_02,
-        roof,
-        painting_00,
-        painting_01,
-        painting_02,
-        painting_03,
-        painting_04,
-        painting_05,
-        painting_06,
-        title_00,
-        title_01,
-        title_02,
-        title_03,
-        title_04,
-        title_05,
-        title_06,
-        window
-    )
 
+}
+
+// MATERIALS
+const wireframeMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x00ff00, 
+    wireframe: true, 
+});
+
+//MODELS
+gltfLoader.load('./models/gltf/Azul_24_scene.gltf', (gltf) => {
+
+    gltf.scene.traverse(group => {
+        if (group.name.includes("Bench")) {
+            bench_grp = group
+        } else if (group.name.includes("White")) {
+            white_wall_grp = group
+        } else if (group.name.includes("Color")) {
+            color_wall_grp = group
+        } else if (group.name.includes("Light")) {
+            light_grp = group
+        } else if (group.name.includes("Stands")) {
+            stands_grp = group
+        } else if (group.name.includes("Floor")) {
+            floor_grp = group
+        } else if (group.name.includes("Iron")) {
+            iron_grid_grp = group
+        }
+    })
+
+    toggleWireframe([bench_grp, bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, iron_grid_grp])
+    scene.add(bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, iron_grid_grp)
+
+    const floorBody = new CANNON.Body({
+        type: CANNON.Body.STATIC,
+        shape: new CANNON.Plane,
+
+    })
+    floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0)
+    cannonPhysics.addBody(floorBody)
+
+
+    return
     //CONVERT SHAPES
     //WALL 1
     const wallConverted1 = threeToCannon(wall_1, { type: ShapeType.BOX });
@@ -246,7 +166,7 @@ gltfLoader.load('./models/gltf/Scene_05.gltf', (gltf) => {
     })
     wallBody2.shapeOffsets = [wallOffset2]
     cannonPhysics.addBody(wallBody2)
-    
+
     //WALL 3
     const wallConverted3 = threeToCannon(wall_3, { type: ShapeType.BOX });
     const { shape: wallShape3, offset: wallOffset3, } = wallConverted3;
@@ -268,16 +188,16 @@ gltfLoader.load('./models/gltf/Scene_05.gltf', (gltf) => {
     })
     // wallBody4.shapeOffsets = [wallOffset4]
     console.log(wall_4, 'n', wallOffset4)
-    cannonPhysics.addBody(wallBody4)   
+    cannonPhysics.addBody(wallBody4)
 
     //FLOOR
     const floorConverted = threeToCannon(floor, { type: ShapeType.BOX });
     const { shape: floorShape, offset: floorOffset, } = floorConverted;
 
-    const floorBody = new CANNON.Body({
+    floorBody = new CANNON.Body({
         type: CANNON.Body.STATIC,
         shape: floorShape,
-        position: floor.position, 
+        position: floor.position,
         material: physicsMaterial
     })
 
@@ -286,7 +206,7 @@ gltfLoader.load('./models/gltf/Scene_05.gltf', (gltf) => {
     cannonPhysics.addBody(floorBody)
 
 
-   
+
 
 })
 
@@ -357,7 +277,7 @@ const tick = () => {
     if (controls.enabled) {
         // console.log(controls)
         cannonPhysics.step(timeStep, dt)
-    
+
     }
     cannonDebugger.update()
 
