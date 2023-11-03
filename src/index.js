@@ -81,22 +81,28 @@ const rgbeLoader = new RGBELoader()
 const textureLoader = new THREE.TextureLoader()
 
 //TEXTURES
-const floorDiff = textureLoader.load('./textures/wood_floor_diff_2k.jpg')
-const floorNor = textureLoader.load('./textures/wood_floor_nor_gl_2k.jpg')
-const floorRough = textureLoader.load('./textures/wood_floor_rough_2k.jpg')
+const plywoodDiff = textureLoader.load('./textures/plywood_diff_2k.jpg')
+const plywoodNor = textureLoader.load('./textures/plywood_nor_gl_2k.jpg')
+const plywoodRough = textureLoader.load('./textures/plywood_rough_2k.jpg')
 const floorAO = textureLoader.load('./textures/wood_floor_ao_2k.jpg')
 const painting_00_diff = textureLoader.load('./models/gltf/1f1e0f7d-f66e-4267-9f60-5ddd16877d14.jpeg')
 
-const painting_00_Material = new THREE.MeshStandardMaterial({
-    map: painting_00_diff
-})
+// const bench_07_map = textureLoader.load('./textures/JPEG/Azul_30__Bench_grp_bench_07_bench_Shape7_rmanDefaultBakeDisplay.jpg')
+
+// const bench_07_mtl = new THREE.MeshStandardMaterial({
+//     map: bench_07_map
+// })
 
 
-const toggleWireframe = (groups) => {
+
+const assignMaterials = (groups, material) => {
+    let count = 0
     groups.forEach(group => {
         group.traverse(item => {
             if (item.isMesh) {
-                item.material = wireframeMaterial
+                console.log(item.name)
+                item.material = material[count]
+                count++
             }
         })
     })
@@ -105,13 +111,20 @@ const toggleWireframe = (groups) => {
 }
 
 // MATERIALS
-const wireframeMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0x00ff00, 
-    wireframe: true, 
+const wireframeMaterial = new THREE.MeshStandardMaterial({
+    color: 0x00ff00,
+    wireframe: true,
 });
+const bench_mtl = new THREE.MeshStandardMaterial({
+    map: plywoodDiff
+})
+const white_mtl = new THREE.MeshStandardMaterial({
+    color: "white"
+})
+
 
 //MODELS
-gltfLoader.load('./models/gltf/Azul_24_scene.gltf', (gltf) => {
+gltfLoader.load('./models/gltf/Azul_31/Azul_31_scene.gltf', (gltf) => {
 
     gltf.scene.traverse(group => {
         if (group.name.includes("Bench")) {
@@ -131,7 +144,9 @@ gltfLoader.load('./models/gltf/Azul_24_scene.gltf', (gltf) => {
         }
     })
 
-    toggleWireframe([bench_grp, bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, iron_grid_grp])
+    // assignMaterials([white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, iron_grid_grp], wireframeMaterial)
+    // assignMaterials([white_wall_grp,], white_mtl)
+    // assignMaterials([bench_grp], [bench_00_mtl, bench_01_mtl, bench_02_mtl, bench_03_mtl, bench_04_mtl, bench_05_mtl, bench_06_mtl,])
     scene.add(bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, iron_grid_grp)
 
     const floorBody = new CANNON.Body({
