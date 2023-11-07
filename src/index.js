@@ -1,14 +1,9 @@
 import * as THREE from 'three';
-
-
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import * as DAT from 'lil-gui'
-
 import * as CANNON from 'cannon-es'
 import CannonDebugger from 'cannon-es-debugger';
-
 import { PointerLockControlsCannon_Modified } from './PointerLockControlsCannon_Modified.js'
-
 
 //VARS
 const canvas = document.querySelector('canvas.webgl')
@@ -22,13 +17,7 @@ let trim_grp
 let iron_grid_grp
 let sphereBody
 let physicsMaterial
-let originialMaterial0
-let originialMaterial1
-let originialMaterial2
-let originialMaterial3
-let originialMaterial4
-let originialMaterial5
-let originialMaterial6
+
 const timeStep = 1 / 60
 let lastCallTime = performance.now() / 1000
 const clock = new THREE.Clock()
@@ -39,10 +28,9 @@ const sizes = {
     height: window.innerHeight,
 }
 
-
-
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 camera.position.y = 4
+
 //CANNON WORLD
 const cannonPhysics = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.82, 0)
@@ -61,13 +49,12 @@ const renderer = new THREE.WebGLRenderer({
     canvas
 })
 
-
-
 //LOADERS
 const gltfLoader = new GLTFLoader()
 const textureLoader = new THREE.TextureLoader()
 
-//TEXTURES
+//LIGHTMAPS
+//BENCHES
 const bench_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_00_bench_00Shape.jpg')
 const bench_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_01_bench_01Shape.jpg')
 const bench_lightmap_02 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_02_bench_02Shape.jpg')
@@ -76,59 +63,855 @@ const bench_lightmap_04 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Ben
 const bench_lightmap_05 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_05_bench_05Shape.jpg')
 const bench_lightmap_06 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_06_bench_06Shape.jpg')
 
+bench_lightmap_00.flipY = false
+bench_lightmap_01.flipY = false
+bench_lightmap_02.flipY = false
+bench_lightmap_03.flipY = false
+bench_lightmap_04.flipY = false
+bench_lightmap_05.flipY = false
+bench_lightmap_06.flipY = false
 
-let original = false
+//FLOORS
+const floor_hallway_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Floor_grp_Floor_Hallway_00_Floor_Hallway_Shape0.jpg')
+const floor_hallway_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Floor_grp_Floor_Hallway_01_Floor_Hallway_Shape1.jpg')
+const floor_outside_lightmap_03 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Floor_grp_Floor_Outside_03_Floor_Outside_Shape3.jpg')
+const floor_wooden_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Floor_grp_Floor_Wooden_00_Floor_Wooden_Shape0.jpg')
+const floor_wooden_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Floor_grp_Floor_Wooden_01_Floor_Wooden_Shape1.jpg')
 
-const toggleBenchShaders = () => {
+floor_hallway_lightmap_00.flipY = false
+floor_hallway_lightmap_01.flipY = false
+floor_outside_lightmap_03.flipY = false
+floor_wooden_lightmap_00.flipY = false
+floor_wooden_lightmap_01.flipY = false
 
-    original ?
-        bench_grp.traverse((bench) => {
-            if (bench.name === "bench_00PIV") {
-                bench.material = originialMaterial0;
-            } else if (bench.name === "bench_01PIV") {
-                bench.material = originialMaterial1;
-            } else if (bench.name === "bench_02PIV") {
-                bench.material = originialMaterial2;
-            } else if (bench.name === "bench_03PIV") {
-                bench.material = originialMaterial3;
-            } else if (bench.name === "bench_04PIV") {
-                bench.material = originialMaterial4;
-            } else if (bench.name === "bench_05PIV") {
-                bench.material = originialMaterial5;
-            } else if (bench.name === "bench_06PIV") {
-                bench.material = originialMaterial6;
-            }
-        })
-        :
-        bench_grp.traverse((bench) => {
-            if (bench.name === "bench_00PIV") {
-                bench.material.map = bench_lightmap_00;
-            } else if (bench.name === "bench_01PIV") {
-                bench.material.map = bench_lightmap_01;
-            } else if (bench.name === "bench_02PIV") {
-                bench.material.map = bench_lightmap_02;
-            } else if (bench.name === "bench_03PIV") {
-                bench.material.map = bench_lightmap_03;
-            } else if (bench.name === "bench_04PIV") {
-                bench.material.map = bench_lightmap_04;
-            } else if (bench.name === "bench_05PIV") {
-                bench.material.map = bench_lightmap_05;
-            } else if (bench.name === "bench_06PIV") {
-                bench.material.map = bench_lightmap_06;
-            }
-        });
+//WHITE WALLS
+const white_wall_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_00_White_Wall_Shape0.jpg')
+const white_wall_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_01_White_Wall_Shape1.jpg')
+const white_wall_lightmap_02 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_02_White_Wall_02Shape.jpg')
+const white_wall_lightmap_03 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_03_White_Wall_Shape3.jpg')
+const white_wall_lightmap_04 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_04_White_Wall_04Shape.jpg')
+const white_wall_lightmap_05 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_05_White_Wall_Shape5.jpg')
+const white_wall_lightmap_06 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_white_Wall_06_white_Wall_Shape6.jpg')
+const white_wall_lightmap_07 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_07_White_Wall_07Shape.jpg')
+const white_ceiling_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Ceiling_00_White_Ceiling_Shape0.jpg')
+const white_ceiling_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Ceiling_01_White_Ceiling_Shape1.jpg')
+const white_ceiling_lightmap_02 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Ceiling_02_White_Ceiling_Shape2.jpg')
+const white_ceiling_lightmap_03 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Ceiling_03_White_Ceiling_Shape3.jpg')
 
-    original = !original
-    console.log(original)
-}
+white_wall_lightmap_00.flipY = false
+white_wall_lightmap_01.flipY = false
+white_wall_lightmap_02.flipY = false
+white_wall_lightmap_03.flipY = false
+white_wall_lightmap_04.flipY = false
+white_wall_lightmap_05.flipY = false
+white_wall_lightmap_06.flipY = false
+white_wall_lightmap_07.flipY = false
+white_ceiling_lightmap_00.flipY = false
+white_ceiling_lightmap_01.flipY = false
+white_ceiling_lightmap_02.flipY = false
+white_ceiling_lightmap_03.flipY = false
+
+//COLOR WALLS
+const color_wall_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_01_Color_Walls_01Shape.jpg')
+const color_wall_lightmap_02 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_02_Color_Walls_02Shape.jpg')
+const color_wall_lightmap_03 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_03_Color_Walls_Shape3.jpg')
+const color_wall_lightmap_04 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_04_Color_Walls_04Shape.jpg')
+const color_wall_lightmap_06 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_06_Color_Walls_Shape6.jpg')
+const color_wall_lightmap_07 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_07_Color_Walls_Shape7.jpg')
+const color_wall_lightmap_08 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_08_Color_Walls_08Shape.jpg')
+
+
+color_wall_lightmap_01.flipY = false
+color_wall_lightmap_02.flipY = false
+color_wall_lightmap_03.flipY = false
+color_wall_lightmap_04.flipY = false
+color_wall_lightmap_06.flipY = false
+color_wall_lightmap_07.flipY = false
+color_wall_lightmap_08.flipY = false
+
+//STANDS
+const stand_white_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Stands_grp_Stand_White_00_Stand_White_00Shape.jpg')
+const stand_metal_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Stands_grp_Stand_Metal_00_Stand_Metal_00Shape.jpg')
+
+stand_white_lightmap_00.flipY = false
+stand_metal_lightmap_01.flipY = false
+
+//TRIMS
+const trim_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Trim_grp_trim_0_trim_0Shape.jpg')
+
+trim_lightmap_00.flipY = false
+
+//TEXTURES
+const bench_albedo = textureLoader.load('./textures/plywood_diff_2k.jpg')
+const bench_nor = textureLoader.load('./textures/plywood_nor_gl_2k.jpg')
+const floor_outside_albedo = textureLoader.load('./textures/square_concrete_pavers_diff_2k.jpg')
+const floor_hallway_albedo = textureLoader.load('./textures/large_floor_tiles_02_diff_2k.jpg')
+const floor_wooden_albedo = textureLoader.load('./textures/wood_floor_deck_diff_2k.jpg', (texture) => {
+
+
+})
+
+// floor_wooden_albedo.repeat.x = 20
+// floor_wooden_albedo.repeat.y = 20
+floor_wooden_albedo.wrapS = THREE.RepeatWrapping
+floor_wooden_albedo.wrapT = THREE.RepeatWrapping
+floor_outside_albedo.wrapS = THREE.RepeatWrapping
+floor_outside_albedo.wrapT = THREE.RepeatWrapping
+floor_hallway_albedo.wrapS = THREE.RepeatWrapping
+floor_hallway_albedo.wrapT = THREE.RepeatWrapping
+// floor_wooden_albedo.needsUpdate = true
+
+const floor_wooden_nor = textureLoader.load('./textures/wood_floor_deck_nor_gl_2k.jpg')
+
 
 const log = () => {
-    console.log(originialMaterial0)
 }
 
 
-let debugFunc = {toggleBenchShaders,log}
-gui.add(debugFunc, "toggleBenchShaders")
+const bench_00_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: bench_lightmap_00 },
+        texture2: { value: bench_albedo },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+
+const bench_01_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: bench_lightmap_01 },
+        texture2: { value: bench_albedo },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+
+const bench_02_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: bench_lightmap_02 },
+        texture2: { value: bench_albedo },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+
+const bench_03_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: bench_lightmap_03 },
+        texture2: { value: bench_albedo },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+
+const bench_04_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: bench_lightmap_04 },
+        texture2: { value: bench_albedo },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+
+const bench_05_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: bench_lightmap_05 },
+        texture2: { value: bench_albedo },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+
+const bench_06_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: bench_lightmap_06 },
+        texture2: { value: bench_albedo },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+
+
+const floor_hallway_00_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: floor_hallway_lightmap_00 },
+        texture2: { value: floor_hallway_albedo },
+        textureRepeat: { value: 10.0 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform float textureRepeat;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv * textureRepeat);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+const floor_outside_03_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: floor_outside_albedo },
+        texture2: { value: floor_outside_lightmap_03 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+const floor_hallway_01_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: floor_hallway_lightmap_01 },
+        texture2: { value: floor_hallway_albedo },
+        textureRepeat: { value: 10.0 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform float textureRepeat;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv * textureRepeat);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+const floor_wooden_00_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: floor_wooden_lightmap_00 },
+        texture2: { value: floor_wooden_albedo },
+        textureRepeat: { value: 10.0 },
+        normalMap: { value: floor_wooden_nor }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform float textureRepeat;
+      varying vec2 vUv;
+      void main() {
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv * textureRepeat);
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+const floor_wooden_01_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: floor_wooden_lightmap_01 },
+        texture2: { value: floor_wooden_albedo },
+        textureRepeat: { value: 10.0 },
+        normalMap: { value: floor_wooden_nor }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+
+      uniform float textureRepeat;
+      varying vec2 vUv;
+      void main() {
+
+        vec4 normalColor = texture2D(normalMap, vUv * textureRepeat);
+
+        // Calculate the perturbed normal
+        vec3 perturbedNormal = normalize(normalColor.xyz * 2.0 - 1.0);
+       
+        vec4 color1 = texture2D(texture1, vUv);
+        vec4 color2 = texture2D(texture2, vUv * textureRepeat);
+        
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+const white_wall_00_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: white_wall_lightmap_00 },
+        colorBase: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const white_wall_01_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: white_wall_lightmap_01 },
+        colorBase: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const white_wall_02_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: white_wall_lightmap_02 },
+        colorBase: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const white_wall_03_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: white_wall_lightmap_03 },
+        colorBase: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const white_wall_04_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: white_wall_lightmap_04 },
+        colorBase: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const white_wall_05_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: white_wall_lightmap_05 },
+        colorBase: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const white_wall_06_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: white_wall_lightmap_06 },
+        colorBase: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const white_wall_07_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: white_wall_lightmap_07 },
+        colorBase: { value: new THREE.Vector4(1.0, 1.0, 1.0, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+
+const color_wall_01_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: color_wall_lightmap_01 },
+        colorBase: { value: new THREE.Vector4(0.08, 0.49, 0.69, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor =  color1 * colorBase;
+      }
+    `,
+});
+const color_wall_02_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: color_wall_lightmap_02 },
+        colorBase: { value: new THREE.Vector4(0.08, 0.49, 0.69, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const color_wall_03_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: color_wall_lightmap_03 },
+        colorBase: { value: new THREE.Vector4(0.08, 0.49, 0.69, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const color_wall_04_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: color_wall_lightmap_04 },
+        colorBase: { value: new THREE.Vector4(0.08, 0.49, 0.69, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+
+const color_wall_06_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: color_wall_lightmap_06 },
+        colorBase: { value: new THREE.Vector4(0.08, 0.49, 0.69, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const color_wall_07_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: color_wall_lightmap_07 },
+        colorBase: { value: new THREE.Vector4(0.08, 0.49, 0.69, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+const color_wall_08_material = new THREE.ShaderMaterial({
+    uniforms: {
+        texture1: { value: color_wall_lightmap_08 },
+        colorBase: { value: new THREE.Vector4(0.08, 0.49, 0.69, 1.0) }
+
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;
+      uniform sampler2D normalMap;
+      uniform vec4 colorBase;
+     
+      varying vec2 vUv;
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);
+        
+        
+        gl_FragColor = color1 * colorBase;
+      }
+    `,
+});
+
+
+
+let debugFunc = { log }
 gui.add(debugFunc, "log")
 
 //MODELS
@@ -136,12 +919,6 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
     gltf.scene.traverse(group => {
         if (group.name === "Bench_grp") {
             bench_grp = group
-
-            group.traverse(mesh => {
-                if (mesh.isMesh) {
-
-                }
-            })
         } else if (group.name === "White_Wall_grp") {
             white_wall_grp = group
         } else if (group.name === "Color_Wall_grp") {
@@ -161,21 +938,82 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
 
     bench_grp.traverse((bench) => {
         if (bench.name === "bench_00PIV") {
-            originialMaterial0 = bench.material.clone()
+            bench.material = bench_00_material
         } else if (bench.name === "bench_01PIV") {
-            originialMaterial1 = bench.material.clone()
+            bench.material = bench_01_material
         } else if (bench.name === "bench_02PIV") {
-            originialMaterial2 = bench.material.clone()
+            bench.material = bench_02_material
         } else if (bench.name === "bench_03PIV") {
-            originialMaterial3 = bench.material.clone()
+            bench.material = bench_03_material
         } else if (bench.name === "bench_04PIV") {
-            originialMaterial4 = bench.material.clone()
+            bench.material = bench_04_material
         } else if (bench.name === "bench_05PIV") {
-            originialMaterial5 = bench.material.clone()
+            bench.material = bench_05_material
         } else if (bench.name === "bench_06PIV") {
-            originialMaterial6 = bench.material.clone()
+            bench.material = bench_06_material
         }
     });
+
+    floor_grp.traverse((floor) => {
+        // console.log(floor.name)
+        if (floor.name === "Floor_Hallway_00") {
+            floor_hallway_00_material.needsUpdate = true
+            floor.material = floor_hallway_00_material
+        } else if (floor.name === "Floor_Hallway_01") {
+            floor.material = floor_hallway_01_material
+        } else if (floor.name === "Floor_Outside_03") {
+            floor.material = floor_outside_03_material
+        } else if (floor.name === "Floor_Wooden_00") {
+            floor_wooden_00_material.needsUpdate = true
+
+            floor.material = floor_wooden_00_material
+        } else if (floor.name === "Floor_Wooden_01") {
+            floor.material = floor_wooden_01_material
+        }
+    });
+    white_wall_grp.traverse((wall) => {
+        console.log(wall.name)
+
+        if (wall.name === "White_Wall_00") {
+
+            wall["children"][0].material = white_wall_00_material
+        } else if (wall.name === "White_Wall_01") {
+            wall.material = white_wall_01_material
+        } else if (wall.name === "White_Wall_02") {
+            wall["children"][0].material = white_wall_02_material
+        } else if (wall.name === "White_Wall_03") {
+            wall["children"][0].material = white_wall_03_material
+        } else if (wall.name === "White_Wall_04") {
+            wall["children"][0].material = white_wall_04_material
+        } else if (wall.name === "White_Wall_05") {
+            wall.material = white_wall_05_material
+        } else if (wall.name === "white_Wall_06") {
+            wall.material = white_wall_06_material
+        } else if (wall.name === "White_Wall_07") {
+            wall["children"][0].material = white_wall_07_material
+        }
+    });
+        color_wall_grp.traverse((colorWall) => {
+
+            if (colorWall.name === "Color_Walls_01") {
+            
+                colorWall["children"][0].material = color_wall_01_material
+            } else if (colorWall.name === "Color_Walls_02") {
+            
+                colorWall["children"][0].material = color_wall_02_material
+            } else if (colorWall.name === "Color_Walls_03") {
+                colorWall["children"][0].material = color_wall_03_material
+            } else if (colorWall.name === "Color_Walls_04") {
+                colorWall["children"][0].material = color_wall_04_material
+            } else if (colorWall.name === "Color_Walls_06") {
+                colorWall.material = color_wall_06_material
+            } else if (colorWall.name === "Color_Walls_07") {
+                colorWall.material = color_wall_07_material
+            }
+            else if (colorWall.name === "Color_Walls_08") {
+                colorWall["children"][0].material = color_wall_08_material
+            }
+        });
 
     scene.add(iron_grid_grp, bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, trim_grp)
     const floorBody = new CANNON.Body({
@@ -186,8 +1024,6 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
     cannonPhysics.addBody(floorBody)
 })
 
-
-
 sphereBody = new CANNON.Body({
     mass: 5,
     shape: new CANNON.Sphere(.5),
@@ -196,6 +1032,7 @@ sphereBody = new CANNON.Body({
 })
 sphereBody.linearDamping = 0.9
 cannonPhysics.addBody(sphereBody)
+
 
 
 const controls = new PointerLockControlsCannon_Modified(camera, sphereBody, canvas)
