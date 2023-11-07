@@ -1,16 +1,13 @@
 import * as THREE from 'three';
 
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js"
 import * as DAT from 'lil-gui'
 
 import * as CANNON from 'cannon-es'
 import CannonDebugger from 'cannon-es-debugger';
-import { threeToCannon, ShapeType, } from 'three-to-cannon';
 
-import { PointerLockControlsCannon } from './PointerLockControlsCannon.js'
+import { PointerLockControlsCannon_Modified } from './PointerLockControlsCannon_Modified.js'
 
 
 //VARS
@@ -21,9 +18,17 @@ let color_wall_grp
 let light_grp
 let stands_grp
 let floor_grp
+let trim_grp
 let iron_grid_grp
 let sphereBody
 let physicsMaterial
+let originialMaterial0
+let originialMaterial1
+let originialMaterial2
+let originialMaterial3
+let originialMaterial4
+let originialMaterial5
+let originialMaterial6
 const timeStep = 1 / 60
 let lastCallTime = performance.now() / 1000
 const clock = new THREE.Clock()
@@ -34,8 +39,10 @@ const sizes = {
     height: window.innerHeight,
 }
 
+
+
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.y = 2
+camera.position.y = 4
 //CANNON WORLD
 const cannonPhysics = new CANNON.World({
     gravity: new CANNON.Vec3(0, -9.82, 0)
@@ -54,176 +61,131 @@ const renderer = new THREE.WebGLRenderer({
     canvas
 })
 
-const printCamPos = () => {
-    console.log("The CAM POS is ", { x: camera.position.x, y: camera.position.y, z: camera.position.z })
-}
-const printOribitTargetPos = () => {
-    console.log("The ORBIT TARGET POS is ", { x: controls.target.x, y: controls.target.y, z: controls.target.z })
-}
 
-let debugFunc = {
-    printCamPos,
-    printOribitTargetPos,
-}
-
-// gui.add(camera.position, "x").name("Position X")
-// gui.add(camera.position, "y").name("Position Y")
-// gui.add(camera.position, "z").name("Position Z")
-// gui.add(camera.rotation, "x").name("Rotation X")
-// gui.add(camera.rotation, "y").name("Rotation Y")
-// gui.add(camera.rotation, "z").name("Rotation Z")
-// gui.add(debugFunc, "printCamPos").name("Camera Position")
-// gui.add(debugFunc, "printOribitTargetPos").name("Orbit Target Position")
 
 //LOADERS
 const gltfLoader = new GLTFLoader()
-const rgbeLoader = new RGBELoader()
 const textureLoader = new THREE.TextureLoader()
 
 //TEXTURES
-const plywoodDiff = textureLoader.load('./textures/plywood_diff_2k.jpg')
-const plywoodNor = textureLoader.load('./textures/plywood_nor_gl_2k.jpg')
-const plywoodRough = textureLoader.load('./textures/plywood_rough_2k.jpg')
-const floorAO = textureLoader.load('./textures/wood_floor_ao_2k.jpg')
-const painting_00_diff = textureLoader.load('./models/gltf/1f1e0f7d-f66e-4267-9f60-5ddd16877d14.jpeg')
-
-// const bench_07_map = textureLoader.load('./textures/JPEG/Azul_30__Bench_grp_bench_07_bench_Shape7_rmanDefaultBakeDisplay.jpg')
-
-// const bench_07_mtl = new THREE.MeshStandardMaterial({
-//     map: bench_07_map
-// })
+const bench_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_00_bench_00Shape.jpg')
+const bench_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_01_bench_01Shape.jpg')
+const bench_lightmap_02 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_02_bench_02Shape.jpg')
+const bench_lightmap_03 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_03_bench_03Shape.jpg')
+const bench_lightmap_04 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_04_bench_04Shape.jpg')
+const bench_lightmap_05 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_05_bench_05Shape.jpg')
+const bench_lightmap_06 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Bench_grp_bench_06_bench_06Shape.jpg')
 
 
+let original = false
 
-const assignMaterials = (groups, material) => {
-    let count = 0
-    groups.forEach(group => {
-        group.traverse(item => {
-            if (item.isMesh) {
-                console.log(item.name)
-                item.material = material[count]
-                count++
+const toggleBenchShaders = () => {
+
+    original ?
+        bench_grp.traverse((bench) => {
+            if (bench.name === "bench_00PIV") {
+                bench.material = originialMaterial0;
+            } else if (bench.name === "bench_01PIV") {
+                bench.material = originialMaterial1;
+            } else if (bench.name === "bench_02PIV") {
+                bench.material = originialMaterial2;
+            } else if (bench.name === "bench_03PIV") {
+                bench.material = originialMaterial3;
+            } else if (bench.name === "bench_04PIV") {
+                bench.material = originialMaterial4;
+            } else if (bench.name === "bench_05PIV") {
+                bench.material = originialMaterial5;
+            } else if (bench.name === "bench_06PIV") {
+                bench.material = originialMaterial6;
             }
         })
-    })
+        :
+        bench_grp.traverse((bench) => {
+            if (bench.name === "bench_00PIV") {
+                bench.material.map = bench_lightmap_00;
+            } else if (bench.name === "bench_01PIV") {
+                bench.material.map = bench_lightmap_01;
+            } else if (bench.name === "bench_02PIV") {
+                bench.material.map = bench_lightmap_02;
+            } else if (bench.name === "bench_03PIV") {
+                bench.material.map = bench_lightmap_03;
+            } else if (bench.name === "bench_04PIV") {
+                bench.material.map = bench_lightmap_04;
+            } else if (bench.name === "bench_05PIV") {
+                bench.material.map = bench_lightmap_05;
+            } else if (bench.name === "bench_06PIV") {
+                bench.material.map = bench_lightmap_06;
+            }
+        });
 
-
+    original = !original
+    console.log(original)
 }
 
-// MATERIALS
-const wireframeMaterial = new THREE.MeshStandardMaterial({
-    color: 0x00ff00,
-    wireframe: true,
-});
-const bench_mtl = new THREE.MeshStandardMaterial({
-    map: plywoodDiff
-})
-const white_mtl = new THREE.MeshStandardMaterial({
-    color: "white"
-})
+const log = () => {
+    console.log(originialMaterial0)
+}
 
+
+let debugFunc = {toggleBenchShaders,log}
+gui.add(debugFunc, "toggleBenchShaders")
+gui.add(debugFunc, "log")
 
 //MODELS
-gltfLoader.load('./models/gltf/Azul_31/Azul_31_scene.gltf', (gltf) => {
-
+gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
     gltf.scene.traverse(group => {
-        if (group.name.includes("Bench")) {
+        if (group.name === "Bench_grp") {
             bench_grp = group
-        } else if (group.name.includes("White")) {
+
+            group.traverse(mesh => {
+                if (mesh.isMesh) {
+
+                }
+            })
+        } else if (group.name === "White_Wall_grp") {
             white_wall_grp = group
-        } else if (group.name.includes("Color")) {
+        } else if (group.name === "Color_Wall_grp") {
             color_wall_grp = group
-        } else if (group.name.includes("Light")) {
+        } else if (group.name === "Lights_grp") {
             light_grp = group
-        } else if (group.name.includes("Stands")) {
+        } else if (group.name === "Stands_grp") {
             stands_grp = group
-        } else if (group.name.includes("Floor")) {
+        } else if (group.name === "Floor_grp") {
             floor_grp = group
-        } else if (group.name.includes("Iron")) {
+        } else if (group.name === "Iron_Grid_grp") {
             iron_grid_grp = group
+        } else if (group.name === "Trim_grp") {
+            trim_grp = group
         }
     })
 
-    // assignMaterials([white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, iron_grid_grp], wireframeMaterial)
-    // assignMaterials([white_wall_grp,], white_mtl)
-    // assignMaterials([bench_grp], [bench_00_mtl, bench_01_mtl, bench_02_mtl, bench_03_mtl, bench_04_mtl, bench_05_mtl, bench_06_mtl,])
-    scene.add(bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, iron_grid_grp)
+    bench_grp.traverse((bench) => {
+        if (bench.name === "bench_00PIV") {
+            originialMaterial0 = bench.material.clone()
+        } else if (bench.name === "bench_01PIV") {
+            originialMaterial1 = bench.material.clone()
+        } else if (bench.name === "bench_02PIV") {
+            originialMaterial2 = bench.material.clone()
+        } else if (bench.name === "bench_03PIV") {
+            originialMaterial3 = bench.material.clone()
+        } else if (bench.name === "bench_04PIV") {
+            originialMaterial4 = bench.material.clone()
+        } else if (bench.name === "bench_05PIV") {
+            originialMaterial5 = bench.material.clone()
+        } else if (bench.name === "bench_06PIV") {
+            originialMaterial6 = bench.material.clone()
+        }
+    });
 
+    scene.add(iron_grid_grp, bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, trim_grp)
     const floorBody = new CANNON.Body({
         type: CANNON.Body.STATIC,
         shape: new CANNON.Plane,
-
     })
     floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0)
     cannonPhysics.addBody(floorBody)
-
-
-    return
-    //CONVERT SHAPES
-    //WALL 1
-    const wallConverted1 = threeToCannon(wall_1, { type: ShapeType.BOX });
-    const { shape: wallShape1, offset: wallOffset1, } = wallConverted1;
-    const wallBody1 = new CANNON.Body({
-        type: CANNON.Body.STATIC,
-        shape: wallShape1,
-        position: wall_1.position
-    })
-    wallBody1.shapeOffsets = [wallOffset1]
-    cannonPhysics.addBody(wallBody1)
-
-    //WALL 2
-    const wallConverted2 = threeToCannon(wall_2, { type: ShapeType.BOX });
-    const { shape: wallShape2, offset: wallOffset2, } = wallConverted2;
-    const wallBody2 = new CANNON.Body({
-        type: CANNON.Body.STATIC,
-        shape: wallShape2,
-        position: wall_2.position
-    })
-    wallBody2.shapeOffsets = [wallOffset2]
-    cannonPhysics.addBody(wallBody2)
-
-    //WALL 3
-    const wallConverted3 = threeToCannon(wall_3, { type: ShapeType.BOX });
-    const { shape: wallShape3, offset: wallOffset3, } = wallConverted3;
-    const wallBody3 = new CANNON.Body({
-        type: CANNON.Body.STATIC,
-        shape: wallShape3,
-        position: wall_3.position
-    })
-    wallBody3.shapeOffsets = [wallOffset3]
-    cannonPhysics.addBody(wallBody3)
-
-    //WALL 4 
-    const wallConverted4 = threeToCannon(wall_4, { type: ShapeType.BOX });
-    const { shape: wallShape4, offset: wallOffset4, } = wallConverted4;
-    const wallBody4 = new CANNON.Body({
-        type: CANNON.Body.STATIC,
-        shape: wallShape4,
-        position: wall_4.position
-    })
-    // wallBody4.shapeOffsets = [wallOffset4]
-    console.log(wall_4, 'n', wallOffset4)
-    cannonPhysics.addBody(wallBody4)
-
-    //FLOOR
-    const floorConverted = threeToCannon(floor, { type: ShapeType.BOX });
-    const { shape: floorShape, offset: floorOffset, } = floorConverted;
-
-    floorBody = new CANNON.Body({
-        type: CANNON.Body.STATIC,
-        shape: floorShape,
-        position: floor.position,
-        material: physicsMaterial
-    })
-
-    floorBody.shapeOffsets = [floorOffset]
-    floorBody.collisionResponse = true;
-    cannonPhysics.addBody(floorBody)
-
-
-
-
 })
+
 
 
 sphereBody = new CANNON.Body({
@@ -235,25 +197,17 @@ sphereBody = new CANNON.Body({
 sphereBody.linearDamping = 0.9
 cannonPhysics.addBody(sphereBody)
 
-const controls = new PointerLockControlsCannon(camera, sphereBody, canvas)
+
+const controls = new PointerLockControlsCannon_Modified(camera, sphereBody, canvas)
+// const controls = new PointerLockControlsCannon(camera, sphereBody)
 controls.enabled = true
+
+controls.unlock()
 scene.add(controls.getObject())
+
 
 // CANNON DEBUGGER
 const cannonDebugger = new CannonDebugger(scene, cannonPhysics)
-
-
-// ORBIT CONTROLS
-// controls.listenToKeyEvents(window);
-// controls.enableDamping = true
-// controls.dampingFactor = 0.05;
-// controls.screenSpacePanning = false;
-
-// controls.maxPolarAngle = Math.PI / 2;
-// controls.minPolarAngle = Math.PI / 4;
-
-// controls.target.set(camera.position.x + 2, camera.position.y, camera.position.z)
-
 
 const axesHelper = new THREE.AxesHelper(100);
 
@@ -288,9 +242,7 @@ const tick = () => {
     const dt = time - lastCallTime
     lastCallTime = time
 
-
     if (controls.enabled) {
-        // console.log(controls)
         cannonPhysics.step(timeStep, dt)
 
     }

@@ -1,20 +1,18 @@
-import * as THREE from 'three'
-import { TOUCH } from 'three'
+import * as THREE from 'https://unpkg.com/three@0.122.0/build/three.module.js'
 import * as CANNON from 'cannon-es'
-import { lerp } from 'three/src/math/MathUtils'
 
 /**
  * @author mrdoob / http://mrdoob.com/
  * @author schteppe / https://github.com/schteppe
  */
 class PointerLockControlsCannon extends THREE.EventDispatcher {
-  constructor(camera, cannonBody, canvas) {
+  constructor(camera, cannonBody) {
     super()
 
     this.enabled = false
 
     this.cannonBody = cannonBody
-    this.canvas = canvas
+
     // var eyeYPos = 2 // eyes are 2 meters above the ground
     this.velocityFactor = 0.2
     this.jumpVelocity = 20
@@ -32,12 +30,9 @@ class PointerLockControlsCannon extends THREE.EventDispatcher {
     this.moveBackward = false
     this.moveLeft = false
     this.moveRight = false
+
     this.canJump = false
 
-
-
-    const targetYawRotation = this.yawObject.rotation.y; //Oliver
-    this.targetYawRotation = targetYawRotation
     const contactNormal = new CANNON.Vec3() // Normal in the contact, pointing *out* of whatever the player touched
     const upAxis = new CANNON.Vec3(0, 1, 0)
     this.cannonBody.addEventListener('collide', (event) => {
@@ -73,10 +68,7 @@ class PointerLockControlsCannon extends THREE.EventDispatcher {
   }
 
   connect() {
-    // document.addEventListener('pointerdown', this.onMouseMove)
-    document.addEventListener('touchstart', this.onTouch)
-    document.addEventListener('touchmove', this.onTouch)
-    document.addEventListener('touchend', this.onTouchEnd)
+    document.addEventListener('mousemove', this.onMouseMove)
     document.addEventListener('pointerlockchange', this.onPointerlockChange)
     document.addEventListener('pointerlockerror', this.onPointerlockError)
     document.addEventListener('keydown', this.onKeyDown)
@@ -84,7 +76,7 @@ class PointerLockControlsCannon extends THREE.EventDispatcher {
   }
 
   disconnect() {
-    // document.removeEventListener('mousemove', this.onMouseMove)
+    document.removeEventListener('mousemove', this.onMouseMove)
     document.removeEventListener('pointerlockchange', this.onPointerlockChange)
     document.removeEventListener('pointerlockerror', this.onPointerlockError)
     document.removeEventListener('keydown', this.onKeyDown)
@@ -120,45 +112,19 @@ class PointerLockControlsCannon extends THREE.EventDispatcher {
   }
 
   onMouseMove = (event) => {
-    let isMouseDown = true
-    console.log("Hi ther")
     if (!this.enabled) {
       return
     }
+
     const { movementX, movementY } = event
 
     this.yawObject.rotation.y -= movementX * 0.002
+    this.pitchObject.rotation.x -= movementY * 0.002
 
     this.pitchObject.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this.pitchObject.rotation.x))
   }
-  onTouch = (event) => {
-
-    const normalizedX = (event.targetTouches[0].clientX - this.canvas.getBoundingClientRect().left) / this.canvas.clientWidth;
-    const normalizedY = (event.targetTouches[0].clientY - this.canvas.getBoundingClientRect().top) / this.canvas.clientHeight;
-
-    if (normalizedX < .2 && !this.moveForward && !this.moveBackward) {
-      this.moveLeft = true
-    } else if (normalizedX > .8 && !this.moveForward && !this.moveBackward) {
-      this.moveRight = true
-    }
-
-    if (normalizedY < .5 && !this.moveLeft && !this.moveRight) {
-      this.moveForward = true
-    } else if (normalizedY > .5 && !this.moveLeft && !this.moveRight) {
-      this.moveBackward = true
-    }
-  }
-
-  onTouchEnd = (event) => {
-    this.moveForward = false
-    this.moveBackward = false
-    this.moveLeft = false
-    this.moveRight = false
-  }
-
 
   onKeyDown = (event) => {
-    event.preventDefault(); // Oliver
     switch (event.code) {
       case 'KeyW':
       case 'ArrowUp':
@@ -168,7 +134,6 @@ class PointerLockControlsCannon extends THREE.EventDispatcher {
       case 'KeyA':
       case 'ArrowLeft':
         this.moveLeft = true
-
         break
 
       case 'KeyS':
@@ -181,22 +146,20 @@ class PointerLockControlsCannon extends THREE.EventDispatcher {
         this.moveRight = true
         break
 
-      // case 'Space': OLIVER
-      //   if (this.canJump) {
-      //     this.velocity.y = this.jumpVelocity
-      //   }
-      //   this.canJump = false
-      //   break
+      case 'Space':
+        if (this.canJump) {
+          this.velocity.y = this.jumpVelocity
+        }
+        this.canJump = false
+        break
     }
   }
 
   onKeyUp = (event) => {
-
     switch (event.code) {
       case 'KeyW':
       case 'ArrowUp':
         this.moveForward = false
-        // this.velocity = new CANNON.Vec3(0,0,0)
         break
 
       case 'KeyA':
@@ -237,21 +200,17 @@ class PointerLockControlsCannon extends THREE.EventDispatcher {
     this.inputVelocity.set(0, 0, 0)
 
     if (this.moveForward) {
-      console.log("moveForward")
-      this.inputVelocity.z = (-this.velocityFactor * delta) * .8
+      this.inputVelocity.z = -this.velocityFactor * delta
     }
     if (this.moveBackward) {
-      console.log("moveBackward")
-      this.inputVelocity.z = (this.velocityFactor * delta) * .8
+      this.inputVelocity.z = this.velocityFactor * delta
     }
 
     if (this.moveLeft) {
-      console.log("moveLeft")
-      this.yawObject.rotation.y += .01 //Oliver
+      this.inputVelocity.x = -this.velocityFactor * delta
     }
     if (this.moveRight) {
-      console.log("moveRight")
-      this.yawObject.rotation.y -= .01  //Oliver
+      this.inputVelocity.x = this.velocityFactor * delta
     }
 
     // Convert velocity to world coordinates
