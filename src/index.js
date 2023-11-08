@@ -10,73 +10,73 @@ import './upload.js'
 
 //USER CODE
 // Get the file input element
-const uploadBTN = document.getElementById("upload-btn");
+const fileInput = document.getElementById("fileInput");
 let image
 // Add a change event listener
-uploadBTN.addEventListener("click", async () => {
+fileInput.addEventListener("change", async (event) => {
   // Get the selected file
 
-  let [fileHandle] = await window.showOpenFilePicker({
-    types: [
-      {
-        description: 'İmage Files',
-        accept: {
-          'image/*': ['.png', '.gif', '.jpeg', '.jpg'],
-        },
-      },
-    ],
-    excludeAcceptAllOption: true,
-    multiple: false,
-  })
-  let fileData = await fileHandle.getFile()
-  console.log(fileData);
-  createPainting(fileData)
+
+  const selectedFile = fileInput.files[0]; // Get the selected file
+
+
+
+  createPainting(selectedFile)
 
 });
 
-const createPainting = async (fileData) => {
+const createPainting = async (selectedFile) => {
 
-  const imgSrc = URL.createObjectURL(fileData)
-  // Create a file loader
-  const loader = new THREE.FileLoader();
+  if (selectedFile) {
+    const img = new Image();
 
-  // Set the response type to blob
-  loader.setResponseType("blob");
+    img.onload = function () {
+      const width = this.width;
+      const height = this.height;
 
-  // Load the blob URL
-  loader.load(
-    imgSrc, // the blob URL from the previous example
-    async (data) => {
-  // Create a blob URL from the data
-  const url = URL.createObjectURL(data);
-
-  // Create a texture loader
-  const textureLoader = new THREE.TextureLoader();
-
-  // Load the texture from the blob URL
-  const texture = textureLoader.load(url);
+      console.log('Image width:', width, 'Image height:', height);
 
 
+      // Create a file loader
+      const loader = new THREE.FileLoader();
+      loader.setResponseType("blob");
+
+      // Load the blob URL
+      loader.load(
+        img.src, // the blob URL from the previous example
+        async (data) => {
+          // Create a blob URL from the data
+          const url = URL.createObjectURL(data);
+
+          // Create a texture loader
+          const textureLoader = new THREE.TextureLoader();
+
+          // Load the texture from the blob URL
+          const texture = textureLoader.load(url);
 
 
-  const image = await createImageBitmap(fileData)
+          const geo = new THREE.BoxGeometry(width * .005, height * .005, .5)
+          const material = new THREE.MeshStandardMaterial({ map: texture });
+          const painting = new THREE.Mesh(geo, material)
+          painting.position.setY(height * .0025)
+          painting.rotateY(Math.PI / 2)
+          scene.add(painting)
+
+        },
+        undefined,
+        function (error) {
+          // Handle any errors
+          console.error(error);
+        }
+      );
+
+    };
+
+    img.src = URL.createObjectURL(selectedFile); // Load the selected image
 
 
-  const geo = new THREE.BoxGeometry(image.width * .005, image.height * .005, .5)
-  const material = new THREE.MeshStandardMaterial({ map: texture});
-  const painting = new THREE.Mesh(geo, material)
-  painting.position.setY(image.height * .0025)
-  painting.rotateY(Math.PI / 2)
-  scene.add(painting)
-  console.log(imgSrc)
 
-},
-undefined,
-  function (error) {
-    // Handle any errors
-    console.error(error);
   }
-  );
 
 
 
@@ -86,7 +86,10 @@ undefined,
 
 
 
- 
+
+
+
+
 }
 
 
