@@ -8,28 +8,24 @@ import { PointerLockControlsCannon_Modified } from './PointerLockControlsCannon_
 
 import './upload.js'
 
+const canvas = document.querySelector('canvas.webgl')
 //USER CODE
 // Get the file input element
 const fileInput = document.getElementById("fileInput");
 let image
 // Add a change event listener
+
 fileInput.addEventListener("change", async (event) => {
   // Get the selected file
-
-
   const selectedFile = fileInput.files[0]; // Get the selected file
-
-
-
   createPainting(selectedFile)
-
 });
 
+let currPainting
 const createPainting = async (selectedFile) => {
-
   if (selectedFile) {
     const img = new Image();
-
+    img.src = URL.createObjectURL(selectedFile); // Load the selected image
     img.onload = function () {
       const width = this.width;
       const height = this.height;
@@ -57,11 +53,13 @@ const createPainting = async (selectedFile) => {
 
           const geo = new THREE.BoxGeometry(width * .005, height * .005, .5)
           const material = new THREE.MeshStandardMaterial({ map: texture });
-          const painting = new THREE.Mesh(geo, material)
-          painting.position.setY(height * .0025)
-          painting.rotateY(Math.PI / 2)
-          scene.add(painting)
+          currPainting = new THREE.Mesh(geo, material)
+          currPainting.position.setY(height * .0025)
+          currPainting.rotateY(Math.PI / 2)
+          scene.add(currPainting)
 
+          canvas.addEventListener('pointermove', onPointerMove);
+          canvas.addEventListener('click', movePainting)
         },
         undefined,
         function (error) {
@@ -71,26 +69,70 @@ const createPainting = async (selectedFile) => {
       );
 
     };
+  }
+}
 
-    img.src = URL.createObjectURL(selectedFile); // Load the selected image
+const movePainting = () => {
 
+  console.log(intersects[0].point)
+  const test = currPainting.clone()
+  scene.add(test)
+  test.position.copy(intersects[0].point)
 
+  canvas.removeEventListener('pointermove', onPointerMove)
+  canvas.removeEventListener('click', movePainting)
+}
 
+const onPointerMove = (event) => {
+
+  pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+  pointer.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+
+  // See if the ray from the camera into the world hits one of our meshes
+  intersects = raycaster.intersectObjects(contactWalls);
+
+  for (const intersect of intersects) {
+  
+    
+      currPainting.position.set(0, 0, 0);
+      currPainting.lookAt(intersect.face.normal);
+  
+      currPainting.position.copy(intersect.point);  
+    
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
+  // Toggle rotation bool for meshes that we clicked
 }
+
+// const repositionPainting = (painting) => {
+//   // console.log(painting)
+//   // console.log(painting.position)
+//   // console.log((controls.getObject().getWorldDirection().x * 10.0) + controls.getObject().getWorldPosition().x,)
+
+//   const cameraWorldPosition = new THREE.Vector3
+//   const cameraworldToLocalPosition = new THREE.Vector3
+
+//   controls.getObject().worldToLocal(cameraworldToLocalPosition)
+//   controls.getObject().getWorldPosition(cameraWorldPosition)
+//   console.log("cameraworldToLocalPosition", cameraworldToLocalPosition)
+//   console.log("cameraWorldPosition", cameraWorldPosition)
+
+
+
+//   painting.position.set(
+//     cameraWorldPosition.x,
+//     cameraWorldPosition.y,
+//     cameraWorldPosition.z
+//   )
+
+
+//   painting.quaternion.copy(controls.quaternion);
+//   console.log(painting.position)
+// }
+
+
+
 
 
 
@@ -104,9 +146,10 @@ const createPainting = async (selectedFile) => {
 
 
 //VARS
-const canvas = document.querySelector('canvas.webgl')
+
 let bench_grp
 let white_wall_grp
+let contactWalls = []
 let color_wall_grp
 let light_grp
 let stands_grp
@@ -146,6 +189,18 @@ cannonPhysics.addContactMaterial(physics_physics)
 const renderer = new THREE.WebGLRenderer({
   canvas
 })
+
+///
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let intersects = []
+let helper;
+const geometryHelper = new THREE.ConeGeometry(5, 5, 4);
+// geometryHelper.translate(0, 0, 0);
+geometryHelper.rotateX(Math.PI / 2);
+helper = new THREE.Mesh(geometryHelper, new THREE.MeshNormalMaterial());
+scene.add(helper);
+
 
 //LOADERS
 const gltfLoader = new GLTFLoader()
@@ -268,6 +323,9 @@ floor_hallway_albedo.wrapT = THREE.RepeatWrapping
 const floor_wooden_nor = textureLoader.load('./textures/wood_floor_deck_nor_gl_2k.jpg')
 
 const log = () => {
+  const test = new THREE.Vector3
+  controls.getObject().getWorldDirection(test)
+  console.log(test)
 }
 
 //MATERIALS
@@ -1183,7 +1241,7 @@ const stand_white_00_material = new THREE.ShaderMaterial({
 
 
 let debugFunc = { log }
-// gui.add(debugFunc, "log")
+gui.add(debugFunc, "log")
 
 //MODELS
 gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
@@ -1243,16 +1301,17 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
     }
   });
   white_wall_grp.traverse((wall) => {
-    console.log(wall.name)
 
     if (wall.name === "White_Wall_00") {
 
-      wall["children"][0].material = white_wall_00_material
+      // wall["children"][0].material = white_wall_00_material
     } else if (wall.name === "White_Wall_01") {
       wall.material = white_wall_01_material
     } else if (wall.name === "White_Wall_02") {
+
       wall["children"][0].material = white_wall_02_material
     } else if (wall.name === "White_Wall_03") {
+
       wall["children"][0].material = white_wall_03_material
     } else if (wall.name === "White_Wall_04") {
       wall["children"][0].material = white_wall_04_material
@@ -1275,21 +1334,26 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
   color_wall_grp.traverse((colorWall) => {
 
     if (colorWall.name === "Color_Walls_01") {
-
       colorWall["children"][0].material = color_wall_01_material
+      contactWalls.push(colorWall)
     } else if (colorWall.name === "Color_Walls_02") {
-
+      contactWalls.push(colorWall)
       colorWall["children"][0].material = color_wall_02_material
+      contactWalls.push(colorWall)
     } else if (colorWall.name === "Color_Walls_03") {
+      contactWalls.push(colorWall)
       colorWall["children"][0].material = color_wall_03_material
     } else if (colorWall.name === "Color_Walls_04") {
+      contactWalls.push(colorWall)
       colorWall["children"][0].material = color_wall_04_material
     } else if (colorWall.name === "Color_Walls_06") {
+      contactWalls.push(colorWall)
       colorWall.material = color_wall_06_material
     } else if (colorWall.name === "Color_Walls_07") {
+      contactWalls.push(colorWall)
       colorWall.material = color_wall_07_material
-    }
-    else if (colorWall.name === "Color_Walls_08") {
+    } else if (colorWall.name === "Color_Walls_08") {
+      contactWalls.push(colorWall)
       colorWall["children"][0].material = color_wall_08_material
     }
   });
@@ -1322,6 +1386,7 @@ sphereBody = new CANNON.Body({
   material: physicsMaterial
 })
 sphereBody.linearDamping = 0.9
+sphereBody.position.y = 8
 cannonPhysics.addBody(sphereBody)
 
 
