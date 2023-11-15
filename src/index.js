@@ -159,7 +159,6 @@ const sizes = {
   height: window.innerHeight,
 }
 
-
 //OVERLAY
 const overlayGeometery = new THREE.PlaneGeometry(2, 2, 1, 1,)
 const overlayMaterial = new THREE.ShaderMaterial({
@@ -226,6 +225,7 @@ const loadingManager = new THREE.LoadingManager(
       loadingBarElement.style.transform = ``
       loadingPercentageElement.style.opacity = 0
       loadingBarElement.classList.add('ended')
+      cannonPhysics.addBody(sphereBody)
     })
   },
   //Progress
@@ -1434,7 +1434,7 @@ sphereBody = new CANNON.Body({
 })
 sphereBody.linearDamping = 0.9
 sphereBody.position.y = 8
-cannonPhysics.addBody(sphereBody)
+
 
 
 
