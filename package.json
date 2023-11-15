@@ -16,6 +16,7 @@
     "cannon-es": "^0.20.0",
     "cannon-es-debugger": "^1.0.0",
     "gh-pages": "^6.0.0",
+    "gsap": "3.12",
     "lil-gui": "^0.18.2",
     "three": "^0.157.0",
     "three-to-cannon": "^4.3.0",

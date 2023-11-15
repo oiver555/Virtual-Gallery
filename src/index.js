@@ -5,8 +5,9 @@ import * as DAT from 'lil-gui'
 import * as CANNON from 'cannon-es'
 import CannonDebugger from 'cannon-es-debugger';
 import { PointerLockControlsCannon_Modified } from './PointerLockControlsCannon_Modified.js'
+import { gsap } from 'gsap/gsap-core';
 
-import './upload.js'
+// import './upload.js'
 
 const canvas = document.querySelector('canvas.webgl')
 //USER CODE
@@ -14,138 +15,126 @@ const canvas = document.querySelector('canvas.webgl')
 const fileInput = document.getElementById("fileInput");
 let image
 // Add a change event listener
-
-fileInput.addEventListener("change", async (event) => {
-  // Get the selected file
-  const selectedFile = fileInput.files[0]; // Get the selected file
-  createPainting(selectedFile)
-});
+// fileInput.addEventListener("change", async (event) => {
+//   // Get the selected file
+//   const selectedFile = fileInput.files[0]; // Get the selected file
+//   createPainting(selectedFile)
+// });
 
 let currPainting
+let paintings = []
+let paintingsOnWall = []
+
 const createPainting = async (selectedFile) => {
   if (selectedFile) {
+    const fileName = selectedFile.name.split(".")[0]
     const img = new Image();
     img.src = URL.createObjectURL(selectedFile); // Load the selected image
     img.onload = function () {
       const width = this.width;
-      const height = this.height;
-
-      console.log('Image width:', width, 'Image height:', height);
-
+      const height = this.height
 
       // Create a file loader
       const loader = new THREE.FileLoader();
       loader.setResponseType("blob");
 
-      // Load the blob URL
+      // Load Image Data
       loader.load(
-        img.src, // the blob URL from the previous example
+        img.src,
         async (data) => {
-          // Create a blob URL from the data
+
           const url = URL.createObjectURL(data);
-
-          // Create a texture loader
           const textureLoader = new THREE.TextureLoader();
-
-          // Load the texture from the blob URL
           const texture = textureLoader.load(url);
-
 
           const geo = new THREE.BoxGeometry(width * .005, height * .005, .5)
           const material = new THREE.MeshStandardMaterial({ map: texture });
           currPainting = new THREE.Mesh(geo, material)
           currPainting.position.setY(height * .0025)
           currPainting.rotateY(Math.PI / 2)
+          currPainting.name = fileName
           scene.add(currPainting)
 
-          canvas.addEventListener('pointermove', onPointerMove);
-          canvas.addEventListener('click', movePainting)
+          // paintings.push(currPainting)
+
+          canvas.addEventListener('pointermove', constrainPaintingToPointer);
+          canvas.addEventListener('click', copyPaintingToWall)
         },
         undefined,
         function (error) {
-          // Handle any errors
           console.error(error);
         }
       );
-
     };
   }
 }
 
-const movePainting = () => {
-
-  console.log(intersects[0].point)
-  const test = currPainting.clone()
-  scene.add(test)
-  test.position.copy(intersects[0].point)
-
-  canvas.removeEventListener('pointermove', onPointerMove)
-  canvas.removeEventListener('click', movePainting)
+const copyPaintingToWall = () => {
+  const clone = currPainting.clone()
+  scene.add(currPainting.clone())
+  paintingsOnWall.push(clone)
+  canvas.removeEventListener('pointermove', constrainPaintingToPointer)
+  canvas.removeEventListener('click', copyPaintingToWall)
 }
 
-const onPointerMove = (event) => {
+//Handles Click Event for Paintings on the Wall
+canvas.addEventListener("mouseup", (event) => {
+  pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+  pointer.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera)
 
+  const paintingIntersects = raycaster.intersectObjects(paintingsOnWall)
+
+  console.log(paintingIntersects)
+
+  if (paintingIntersects.length > 0) {
+    canvas.addEventListener("pointermove", (event) => {
+      // console.log(paintingIntersect)
+
+      paintingIntersects[0].object.visible = false
+      bindPaintingToPointer(event, paintingIntersects[0].object);
+    })
+  }
+
+  // for (const paintingIntersect of paintingIntersects) {
+  //   canvas.addEventListener("pointermove", (event) => {
+  //     console.log(paintingIntersect)
+
+  //     // console.log("dhgakhdiauf")
+  //     // bindPaintingToPointer(event, paintingIntersect.object);
+  //   })
+  // }
+})
+
+const bindPaintingToPointer = (event, painting) => {
+  // console.log(painting, pointer)
   pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
   pointer.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
 
-  // See if the ray from the camera into the world hits one of our meshes
   intersects = raycaster.intersectObjects(contactWalls);
 
   for (const intersect of intersects) {
-  
-    
-      currPainting.position.set(0, 0, 0);
-      currPainting.lookAt(intersect.face.normal);
-  
-      currPainting.position.copy(intersect.point);  
-    
+    console.log(painting.position)
+    // painting.position.set(0, 0, 0);
+    // painting.lookAt(intersect.face.normal);
+    painting.position.copy(intersect.point);
   }
-
-  // Toggle rotation bool for meshes that we clicked
 }
 
-// const repositionPainting = (painting) => {
-//   // console.log(painting)
-//   // console.log(painting.position)
-//   // console.log((controls.getObject().getWorldDirection().x * 10.0) + controls.getObject().getWorldPosition().x,)
+const constrainPaintingToPointer = (event) => {
+  pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+  pointer.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
 
-//   const cameraWorldPosition = new THREE.Vector3
-//   const cameraworldToLocalPosition = new THREE.Vector3
+  intersects = raycaster.intersectObjects(contactWalls);
 
-//   controls.getObject().worldToLocal(cameraworldToLocalPosition)
-//   controls.getObject().getWorldPosition(cameraWorldPosition)
-//   console.log("cameraworldToLocalPosition", cameraworldToLocalPosition)
-//   console.log("cameraWorldPosition", cameraWorldPosition)
-
-
-
-//   painting.position.set(
-//     cameraWorldPosition.x,
-//     cameraWorldPosition.y,
-//     cameraWorldPosition.z
-//   )
-
-
-//   painting.quaternion.copy(controls.quaternion);
-//   console.log(painting.position)
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//VARS
+  for (const intersect of intersects) {
+    currPainting.position.set(0, 0, 0);
+    currPainting.lookAt(intersect.face.normal);
+    currPainting.position.copy(intersect.point);
+  }
+}
 
 let bench_grp
 let white_wall_grp
@@ -158,19 +147,43 @@ let trim_grp
 let iron_grid_grp
 let sphereBody
 let physicsMaterial
+let currPercentageValue = 0
 
 const timeStep = 1 / 60
 let lastCallTime = performance.now() / 1000
 const clock = new THREE.Clock()
 const scene = new THREE.Scene()
-const gui = new DAT.GUI()
+// const gui = new DAT.GUI()
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight,
 }
 
+
+//OVERLAY
+const overlayGeometery = new THREE.PlaneGeometry(2, 2, 1, 1,)
+const overlayMaterial = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms: {
+    uAlpha: { value: 1.0 }
+  },
+  vertexShader: `
+  void main () {
+    gl_Position = vec4(position, 1.0);
+  }`,
+  fragmentShader: `
+  uniform float uAlpha;
+  void main() {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+  }`
+})
+const overlay = new THREE.Mesh(overlayGeometery, overlayMaterial)
+
+scene.add(overlay)
+
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 camera.position.y = 4.5
+// camera.lookAt(overlay)
 
 //CANNON WORLD
 const cannonPhysics = new CANNON.World({
@@ -199,13 +212,45 @@ const geometryHelper = new THREE.ConeGeometry(5, 5, 4);
 // geometryHelper.translate(0, 0, 0);
 geometryHelper.rotateX(Math.PI / 2);
 helper = new THREE.Mesh(geometryHelper, new THREE.MeshNormalMaterial());
-scene.add(helper);
+// scene.add(helper);
 
 
 //LOADERS
-const gltfLoader = new GLTFLoader()
-const textureLoader = new THREE.TextureLoader()
-const rgbeLoader = new RGBELoader()
+const loadingBarElement = document.querySelector(".loading-bar")
+const loadingPercentageElement = document.querySelector(".loading-percentage")
+const loadingManager = new THREE.LoadingManager(
+  //Loaded
+  () => {
+    gsap.delayedCall(0.5, () => {
+      gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0 })
+      loadingBarElement.style.transform = ``
+      loadingPercentageElement.style.opacity = 0
+      loadingBarElement.classList.add('ended')
+    })
+  },
+  //Progress
+  (itemsURL, itemsLoaded, itemsTotal) => {
+    const progressRatio = itemsLoaded / itemsTotal
+    if (progressRatio > currPercentageValue) {
+      currPercentageValue = progressRatio
+      currPercentageValue = progressRatio
+      loadingBarElement.style.transform = `scaleX(${progressRatio})`
+      loadingPercentageElement.textContent = `${(progressRatio * 100).toFixed(0)}%`;
+      if (progressRatio === 1) {
+        scene.add(controls.getObject())
+        console.log("Done Loading!")
+      }
+    } else {
+      return
+    }
+
+  }
+)
+const gltfLoader = new GLTFLoader(loadingManager)
+const textureLoader = new THREE.TextureLoader(loadingManager)
+const rgbeLoader = new RGBELoader(loadingManager)
+
+
 
 // ENVIRONMENT
 rgbeLoader.load('/environments/kloofendal_48d_partly_cloudy_puresky_2k.hdr', (envMap) => {
@@ -322,11 +367,7 @@ floor_hallway_albedo.wrapT = THREE.RepeatWrapping
 
 const floor_wooden_nor = textureLoader.load('./textures/wood_floor_deck_nor_gl_2k.jpg')
 
-const log = () => {
-  const test = new THREE.Vector3
-  controls.getObject().getWorldDirection(test)
-  console.log(test)
-}
+
 
 //MATERIALS
 const bench_00_material = new THREE.ShaderMaterial({
@@ -1238,10 +1279,16 @@ const stand_white_00_material = new THREE.ShaderMaterial({
     `,
 });
 
+const paintingsOnWall_log = () => {
+  console.log(paintingsOnWall)
+}
+const paintings_log = () => {
+  console.log(paintings)
+}
 
-
-let debugFunc = { log }
-gui.add(debugFunc, "log")
+// let debugFunc = { paintingsOnWall_log, paintings_log }
+// gui.add(debugFunc, "paintingsOnWall_log")
+// gui.add(debugFunc, "paintings_log")
 
 //MODELS
 gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
@@ -1395,16 +1442,13 @@ const controls = new PointerLockControlsCannon_Modified(camera, sphereBody, canv
 // const controls = new PointerLockControlsCannon(camera, sphereBody)
 controls.enabled = true
 
-controls.unlock()
-scene.add(controls.getObject())
-
 
 // CANNON DEBUGGER
 const cannonDebugger = new CannonDebugger(scene, cannonPhysics)
 
 const axesHelper = new THREE.AxesHelper(100);
 
-scene.add(axesHelper)
+// scene.add(axesHelper)
 
 //LIGHTS
 const ambLight = new THREE.AmbientLight()
@@ -1427,8 +1471,6 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
-
-
 const tick = () => {
   const elapsedTime = clock.getElapsedTime()
   const time = performance.now() / 1000
@@ -1439,7 +1481,7 @@ const tick = () => {
     cannonPhysics.step(timeStep, dt)
 
   }
-  cannonDebugger.update()
+  // cannonDebugger.update()
 
   // cannonPhysics.fixedStep()
   controls.update(dt)

@@ -7,13 +7,17 @@
   </head>
   
   <script type="module" src="./index.js"></script>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
 
   <body>
     <!-- <button id="upload-btn" style="position: absolute; background-color: red; color: white; bottom: 20px; right: 20px; font-size: 26px; padding: 15px; border-radius: 5px;">Upload</button> -->
 
     <div style="position: absolute; color: white; bottom: 80px; right: 20px; font-size: 26px; padding: 15px; border-radius: 5px;">
-    <input type="file" id="fileInput" accept=".jpg, .jpeg, .png"> <!-- Specify the file types you want to allow with the 'accept' attribute -->
+    <!-- <input type="file" id="fileInput" accept=".jpg, .jpeg, .png"> Specify the file types you want to allow with the 'accept' attribute -->
   </div>
     <canvas class="webgl"></canvas>
+    <div class="loading-percentage">0</div>
+    <div class="loading-bar"></div>
   </body>
 </html>
