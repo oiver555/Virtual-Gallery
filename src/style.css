@@ -40,3 +40,10 @@ body {
   opacity: 1;
   font-family: 'Roboto', sans-serif;
 }
+.arrow-keys {
+    width: 10%;
+    position: absolute;
+    bottom: 2%;
+    right: 2%;
+    opacity: .6;
+}

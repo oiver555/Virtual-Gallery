@@ -6,9 +6,18 @@ import * as CANNON from 'cannon-es'
 import CannonDebugger from 'cannon-es-debugger';
 import { PointerLockControlsCannon_Modified } from './PointerLockControlsCannon_Modified.js'
 import { gsap } from 'gsap/gsap-core';
+import Stats from 'stats.js'
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader"
+import { Water } from 'three/examples/jsm/objects/Water2.js';
 
 // import './upload.js'
 
+
+//STATS
+const stats = new Stats()
+stats.showPanel(0)
+document.body.appendChild(stats.dom)
+let time
 const canvas = document.querySelector('canvas.webgl')
 //USER CODE
 // Get the file input element
@@ -85,11 +94,9 @@ canvas.addEventListener("mouseup", (event) => {
 
   const paintingIntersects = raycaster.intersectObjects(paintingsOnWall)
 
-  console.log(paintingIntersects)
 
   if (paintingIntersects.length > 0) {
     canvas.addEventListener("pointermove", (event) => {
-      // console.log(paintingIntersect)
 
       paintingIntersects[0].object.visible = false
       bindPaintingToPointer(event, paintingIntersects[0].object);
@@ -98,16 +105,12 @@ canvas.addEventListener("mouseup", (event) => {
 
   // for (const paintingIntersect of paintingIntersects) {
   //   canvas.addEventListener("pointermove", (event) => {
-  //     console.log(paintingIntersect)
-
-  //     // console.log("dhgakhdiauf")
   //     // bindPaintingToPointer(event, paintingIntersect.object);
   //   })
   // }
 })
 
 const bindPaintingToPointer = (event, painting) => {
-  // console.log(painting, pointer)
   pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
   pointer.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
@@ -115,7 +118,6 @@ const bindPaintingToPointer = (event, painting) => {
   intersects = raycaster.intersectObjects(contactWalls);
 
   for (const intersect of intersects) {
-    console.log(painting.position)
     // painting.position.set(0, 0, 0);
     // painting.lookAt(intersect.face.normal);
     painting.position.copy(intersect.point);
@@ -138,16 +140,18 @@ const constrainPaintingToPointer = (event) => {
 
 let bench_grp
 let white_wall_grp
-let contactWalls = []
 let color_wall_grp
 let light_grp
 let stands_grp
 let floor_grp
 let trim_grp
 let iron_grid_grp
+let fountain_grp
 let sphereBody
 let physicsMaterial
 let currPercentageValue = 0
+let contactWalls = []
+
 
 const timeStep = 1 / 60
 let lastCallTime = performance.now() / 1000
@@ -246,11 +250,12 @@ const loadingManager = new THREE.LoadingManager(
 
   }
 )
+const dracoLoader = new DRACOLoader()
+dracoLoader.setDecoderPath('/draco/')
 const gltfLoader = new GLTFLoader(loadingManager)
+gltfLoader.setDRACOLoader(dracoLoader)
 const textureLoader = new THREE.TextureLoader(loadingManager)
 const rgbeLoader = new RGBELoader(loadingManager)
-
-
 
 // ENVIRONMENT
 rgbeLoader.load('/environments/kloofendal_48d_partly_cloudy_puresky_2k.hdr', (envMap) => {
@@ -259,7 +264,6 @@ rgbeLoader.load('/environments/kloofendal_48d_partly_cloudy_puresky_2k.hdr', (en
   scene.background = envMap
   scene.environment = envMap
 })
-
 
 //LIGHTMAPS
 //BENCHES
@@ -297,7 +301,7 @@ const white_wall_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36
 const white_wall_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_01_White_Wall_Shape1.jpg')
 const white_wall_lightmap_02 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_02_White_Wall_02Shape.jpg')
 const white_wall_lightmap_03 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_03_White_Wall_Shape3.jpg')
-const white_wall_lightmap_04 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_04_White_Wall_04Shape.jpg')
+const white_wall_lightmap_04 = textureLoader.load('./models/gltf/Azul_36/Azul_40__White_Wall_grp_White_Wall_04_White_Wall_Shape4.jpg')
 const white_wall_lightmap_05 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_05_White_Wall_Shape5.jpg')
 const white_wall_lightmap_06 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_white_Wall_06_white_Wall_Shape6.jpg')
 const white_wall_lightmap_07 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_07_White_Wall_07Shape.jpg')
@@ -328,7 +332,6 @@ const color_wall_lightmap_06 = textureLoader.load('./models/gltf/Azul_36/Azul_36
 const color_wall_lightmap_07 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_07_Color_Walls_Shape7.jpg')
 const color_wall_lightmap_08 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Color_Wall_grp_Color_Walls_08_Color_Walls_08Shape.jpg')
 
-
 color_wall_lightmap_01.flipY = false
 color_wall_lightmap_02.flipY = false
 color_wall_lightmap_03.flipY = false
@@ -349,14 +352,20 @@ const trim_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36__Trim
 
 trim_lightmap_00.flipY = false
 
+//FOUNTAIN
+const fountain_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_39__Fountain_grp_fountain_fountainShape.jpg')
+
+fountain_lightmap_00.flipY = false
 //TEXTURES
 const bench_albedo = textureLoader.load('./textures/plywood_diff_2k.jpg')
 const bench_nor = textureLoader.load('./textures/plywood_nor_gl_2k.jpg')
 const floor_outside_albedo = textureLoader.load('./textures/square_concrete_pavers_diff_2k.jpg')
 const floor_hallway_albedo = textureLoader.load('./textures/large_floor_tiles_02_diff_2k.jpg')
-const floor_wooden_albedo = textureLoader.load('./textures/wood_floor_deck_diff_2k.jpg', (texture) => {
-})
+const floor_wooden_albedo = textureLoader.load('./textures/wood_floor_deck_diff_2k.jpg')
+const fountain_albedo = textureLoader.load('./textures/fountain_albedo.jpg')
+const flowMap = textureLoader.load('textures/water_1_M_Flow.jpg');
 
+fountain_albedo.flipY = false
 floor_wooden_albedo.wrapS = THREE.RepeatWrapping
 floor_wooden_albedo.wrapT = THREE.RepeatWrapping
 floor_outside_albedo.wrapS = THREE.RepeatWrapping
@@ -364,10 +373,10 @@ floor_outside_albedo.wrapT = THREE.RepeatWrapping
 floor_hallway_albedo.wrapS = THREE.RepeatWrapping
 floor_hallway_albedo.wrapT = THREE.RepeatWrapping
 
-
 const floor_wooden_nor = textureLoader.load('./textures/wood_floor_deck_nor_gl_2k.jpg')
+const water_test = textureLoader.load('./textures/water_test.jpg')
 
-
+//WATER
 
 //MATERIALS
 const bench_00_material = new THREE.ShaderMaterial({
@@ -534,9 +543,8 @@ const bench_06_material = new THREE.ShaderMaterial({
 
 const floor_hallway_00_material = new THREE.ShaderMaterial({
   uniforms: {
-    texture1: { value: floor_hallway_lightmap_00 },
-    texture2: { value: floor_hallway_albedo },
-    textureRepeat: { value: 10.0 }
+    texture1: { value: floor_hallway_albedo },
+    texture2: { value: floor_hallway_lightmap_00 },
   },
   vertexShader: `
       varying vec2 vUv;
@@ -548,11 +556,10 @@ const floor_hallway_00_material = new THREE.ShaderMaterial({
   fragmentShader: `
       uniform sampler2D texture1;
       uniform sampler2D texture2;
-      uniform float textureRepeat;
       varying vec2 vUv;
       void main() {
         vec4 color1 = texture2D(texture1, vUv);
-        vec4 color2 = texture2D(texture2, vUv * textureRepeat);
+        vec4 color2 = texture2D(texture2, vUv);
         gl_FragColor = color1 * color2;
       }
     `,
@@ -1279,6 +1286,38 @@ const stand_white_00_material = new THREE.ShaderMaterial({
     `,
 });
 
+const fountain_00_material = new THREE.ShaderMaterial({
+  uniforms: {
+    texture1: { value: fountain_lightmap_00 },
+    texture2: { value: fountain_albedo }
+  },
+  vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+  fragmentShader: `
+      uniform sampler2D texture1;
+      uniform sampler2D texture2;   
+      uniform vec4 baseColor;  
+      varying vec2 vUv;
+
+      void main() {
+
+        vec4 color1 = texture2D(texture1, vUv);      
+        vec4 color2 = texture2D(texture2, vUv);      
+        gl_FragColor = color1 * color2;
+      }
+    `,
+});
+
+const water_00_material = new THREE.MeshBasicMaterial({
+  color: "red",
+  side: THREE.DoubleSide
+})
+
 const paintingsOnWall_log = () => {
   console.log(paintingsOnWall)
 }
@@ -1291,7 +1330,7 @@ const paintings_log = () => {
 // gui.add(debugFunc, "paintings_log")
 
 //MODELS
-gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
+gltfLoader.load('./models/gltf/Azul_36/Azul.glb', (gltf) => {
   gltf.scene.traverse(group => {
     if (group.name === "Bench_grp") {
       bench_grp = group
@@ -1309,6 +1348,8 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
       iron_grid_grp = group
     } else if (group.name === "Trim_grp") {
       trim_grp = group
+    } else if (group.name === "Fountain_grp") {
+      fountain_grp = group
     }
   })
 
@@ -1331,27 +1372,25 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
   });
 
   floor_grp.traverse((floor) => {
-    // console.log(floor.name)
-    if (floor.name === "Floor_Hallway_00") {
+    if (floor.name === "Floor_Hallway_00PIV") {
       floor_hallway_00_material.needsUpdate = true
       floor.material = floor_hallway_00_material
-    } else if (floor.name === "Floor_Hallway_01") {
+    } else if (floor.name === "Floor_Hallway_01PIV") {
       floor.material = floor_hallway_01_material
-    } else if (floor.name === "Floor_Outside_03") {
+    } else if (floor.name === "Floor_Outside_03PIV") {
       floor.material = floor_outside_03_material
-    } else if (floor.name === "Floor_Wooden_00") {
+    } else if (floor.name === "Floor_Wooden_00PIV") {
       floor_wooden_00_material.needsUpdate = true
 
       floor.material = floor_wooden_00_material
-    } else if (floor.name === "Floor_Wooden_01") {
+    } else if (floor.name === "Floor_Wooden_01PIV") {
       floor.material = floor_wooden_01_material
     }
   });
   white_wall_grp.traverse((wall) => {
 
     if (wall.name === "White_Wall_00") {
-
-      // wall["children"][0].material = white_wall_00_material
+      wall["children"][0].material = white_wall_00_material
     } else if (wall.name === "White_Wall_01") {
       wall.material = white_wall_01_material
     } else if (wall.name === "White_Wall_02") {
@@ -1407,8 +1446,66 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
   trim_grp.traverse(trim => {
     if (trim.isMesh) trim.material = trim_00_material
   })
+  fountain_grp.traverse(fountain => {
+    if (fountain.name === "fountain_0PIV") {
+      fountain.material = fountain_00_material
+    } else if (fountain.name === "water_0PIV") {
+      console.log(fountain, )
+      console.log(flowMap )
 
+      const waterMat = new THREE.ShaderMaterial({
+        uniforms:{
+          flowMap: { value: flowMap },
+          texture1: {value: water_test},
+          time: time
+        },
+        vertexShader:`
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+        fragmentShader:`
+        uniform sampler2D flowMap;
+        uniform sampler2D texture1;
+        uniform float time;
+     
+        varying vec2 vUv;
+        void main() {
+          // sample the flowmap texture and convert it from [0, 1] to [-1, 1] range
+          vec2 flow = texture2D(flowMap, vUv).rg * 2.0 - 1.0;
+          // multiply the flow by the scale factor and the time to create the offset
+          vec2 offset = flow * 2.0 * time;
+          // add the offset to the original UV coordinates
+          vec2 uv = vUv + offset;
+          // sample the base texture with the offset UV coordinates
+          vec4 color = texture2D(texture1, uv);
+          // output the final color
+          gl_FragColor = color;
+        }
+        `
+      })
+      // const water = new Water(fountain.geometery, {
+      //   scale: 2,
+      //   textureWidth: 1024,
+      //   textureHeight: 1024,
+      //   flowMap: flowMap,
+      // });
 
+      // water.position.y = 1;
+      // water.rotation.x = Math.PI * - 0.5;
+    
+
+      // fountain.material = water_00_material
+      // scene.add(water)
+      // scene.add(water2)
+
+      // fountain.position.y = 5
+      // fountain.rotation.x = Math.PI * 2;
+
+      fountain.material = waterMat
+    }
+  })
   stands_grp.traverse(stand => {
     if (stand.name === "Stand_Metal_00PIV") {
 
@@ -1416,6 +1513,7 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
       stand.material = stand_white_00_material
     }
   })
+
 
   scene.add(iron_grid_grp, bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, trim_grp)
   const floorBody = new CANNON.Body({
@@ -1442,6 +1540,31 @@ const controls = new PointerLockControlsCannon_Modified(camera, sphereBody, canv
 // const controls = new PointerLockControlsCannon(camera, sphereBody)
 controls.enabled = true
 
+
+const arrowKeysElement = document.querySelector('.arrow-keys')
+
+window.addEventListener("keydown", (event) => {
+
+
+  if (event.key === "ArrowDown") {
+    arrowKeysElement.src = "../assets/arrows_backward.png"
+  } else if (event.key === "ArrowUp") {
+    arrowKeysElement.src = "../assets/arrows_forward.png"
+  } else if (event.key === "ArrowLeft") {
+    arrowKeysElement.src = "../assets/arrows_left.png"
+  } else if (event.key === "ArrowRight") {
+    arrowKeysElement.src = "../assets/arrows_right.png"
+  }
+
+})
+window.addEventListener("keyup", (event) => {
+
+
+  if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    arrowKeysElement.src = "../assets/arrows_none.png"
+  }
+
+})
 
 // CANNON DEBUGGER
 const cannonDebugger = new CannonDebugger(scene, cannonPhysics)
@@ -1472,10 +1595,13 @@ window.addEventListener('resize', () => {
 })
 
 const tick = () => {
+  stats.begin()
   const elapsedTime = clock.getElapsedTime()
-  const time = performance.now() / 1000
+  time = performance.now() / 1000
   const dt = time - lastCallTime
   lastCallTime = time
+
+  // console.log(time)
 
   if (controls.enabled) {
     cannonPhysics.step(timeStep, dt)
@@ -1488,5 +1614,7 @@ const tick = () => {
   renderer.render(scene, camera)
 
   window.requestAnimationFrame(tick)
+  stats.end()
+
 }
 tick()
