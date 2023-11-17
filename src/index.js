@@ -217,9 +217,12 @@ helper = new THREE.Mesh(geometryHelper, new THREE.MeshNormalMaterial());
 
 
 //LOADERS
-const gltfLoader = new GLTFLoader()
-const textureLoader = new THREE.TextureLoader()
-const rgbeLoader = new RGBELoader()
+const loaderManager = new THREE.LoadingManager()
+const gltfLoader = new GLTFLoader(loaderManager)
+const textureLoader = new THREE.TextureLoader(loaderManager)
+const rgbeLoader = new RGBELoader(loaderManager)
+
+loaderManager.onProgress
 
 // ENVIRONMENT
 rgbeLoader.load('/environments/kloofendal_48d_partly_cloudy_puresky_2k.hdr', (envMap) => {
@@ -1444,9 +1447,28 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
-const fadein = () => {
-  
-}
+
+//OVERLAY
+const overlayGeometery = new THREE.PlaneGeometry(2, 2, 1, 1,)
+const overlayMaterial = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms: {
+    uAlpha: { value: 1.0 }
+  },
+  vertexShader: `
+  void main () {
+    gl_Position = vec4(position, 1.0);
+  }`,
+  fragmentShader: `
+  uniform float uAlpha;
+  void main() {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+  }`
+})
+const overlay = new THREE.Mesh(overlayGeometery, overlayMaterial)
+scene.add(overlay)
+
+camera.lookAt(overlay)
 
 
 const tick = () => {
