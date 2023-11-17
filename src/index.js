@@ -11,9 +11,8 @@ import './upload.js'
 
 const canvas = document.querySelector('canvas.webgl')
 const fileInput = document.getElementById("fileInput");
-let image
-// Add a change event listener
 
+//FILE HANDLER
 fileInput.addEventListener("change", async (event) => {
   // Get the selected file
   const selectedFile = fileInput.files[0]; // Get the selected file
@@ -102,7 +101,6 @@ const handleSelection = (event) => {
   // canvas.removeEventListener('click', handleSelection)
 }
 
-
 const onPointerMove = (event) => {
 
   pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
@@ -119,48 +117,6 @@ const onPointerMove = (event) => {
     }
   }
 }
-
-// const repositionPainting = (painting) => {
-//   // console.log(painting)
-//   // console.log(painting.position)
-//   // console.log((controls.getObject().getWorldDirection().x * 10.0) + controls.getObject().getWorldPosition().x,)
-
-//   const cameraWorldPosition = new THREE.Vector3
-//   const cameraworldToLocalPosition = new THREE.Vector3
-
-//   controls.getObject().worldToLocal(cameraworldToLocalPosition)
-//   controls.getObject().getWorldPosition(cameraWorldPosition)
-//   console.log("cameraworldToLocalPosition", cameraworldToLocalPosition)
-//   console.log("cameraWorldPosition", cameraWorldPosition)
-
-
-
-//   painting.position.set(
-//     cameraWorldPosition.x,
-//     cameraWorldPosition.y,
-//     cameraWorldPosition.z
-//   )
-
-
-//   painting.quaternion.copy(controls.quaternion);
-//   console.log(painting.position)
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//VARS
 
 let bench_grp
 let white_wall_grp
@@ -202,14 +158,12 @@ const overlayMaterial = new THREE.ShaderMaterial({
   fragmentShader: `
   uniform float uAlpha;
   void main() {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+    gl_FragColor = vec4(1.0, 0.0, 0.0, uAlpha);
   }`
 })
-
 const overlay = new THREE.Mesh(overlayGeometery, overlayMaterial)
 scene.add(overlay)
-
-// camera.lookAt(overlay)
+camera.lookAt(overlay)
 
 //CANNON WORLD
 const cannonPhysics = new CANNON.World({
@@ -242,12 +196,12 @@ helper = new THREE.Mesh(geometryHelper, new THREE.MeshNormalMaterial());
 
 
 //LOADERS
-
 const loadingManager = new THREE.LoadingManager(
   //Loaded
   () => {
+    console.log("dfaffewd")
     gsap.delayedCall(0.5, () => {
-      gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0 })
+      // gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0 })
       loadingBarElement.style.transform = ``
       loadingPercentageElement.style.opacity = 0
       loadingBarElement.classList.add('ended')
@@ -257,6 +211,7 @@ const loadingManager = new THREE.LoadingManager(
   //Progress
   (itemsURL, itemsLoaded, itemsTotal) => {
     const progressRatio = itemsLoaded / itemsTotal
+    console.log(progressRatio)
     if (progressRatio > currPercentageValue) {
       currPercentageValue = progressRatio
       currPercentageValue = progressRatio
@@ -279,8 +234,6 @@ const rgbeLoader = new RGBELoader(loadingManager)
 const loadingBarElement = document.querySelector(".loading-bar")
 const loadingPercentageElement = document.querySelector(".loading-percentage")
 
-
-
 // ENVIRONMENT
 rgbeLoader.load('/environments/kloofendal_48d_partly_cloudy_puresky_2k.hdr', (envMap) => {
   envMap.mapping = THREE.EquirectangularReflectionMapping
@@ -288,7 +241,6 @@ rgbeLoader.load('/environments/kloofendal_48d_partly_cloudy_puresky_2k.hdr', (en
   scene.background = envMap
   scene.environment = envMap
 })
-
 
 //LIGHTMAPS
 //BENCHES
