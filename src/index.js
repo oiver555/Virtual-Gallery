@@ -217,12 +217,44 @@ helper = new THREE.Mesh(geometryHelper, new THREE.MeshNormalMaterial());
 
 
 //LOADERS
+
 const loaderManager = new THREE.LoadingManager()
 const gltfLoader = new GLTFLoader(loaderManager)
 const textureLoader = new THREE.TextureLoader(loaderManager)
 const rgbeLoader = new RGBELoader(loaderManager)
 
-loaderManager.onProgress
+const loadingBarElement = document.querySelector(".loading-bar")
+const loadingPercentageElement = document.querySelector(".loading-percentage")
+
+const loadingManager = new THREE.LoadingManager(
+  //Loaded
+  () => {
+    gsap.delayedCall(0.5, () => {
+      gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0 })
+      loadingBarElement.style.transform = ``
+      loadingPercentageElement.style.opacity = 0
+      loadingBarElement.classList.add('ended')
+      cannonPhysics.addBody(sphereBody)
+    })
+  },
+  //Progress
+  (itemsURL, itemsLoaded, itemsTotal) => {
+    const progressRatio = itemsLoaded / itemsTotal
+    if (progressRatio > currPercentageValue) {
+      currPercentageValue = progressRatio
+      currPercentageValue = progressRatio
+      loadingBarElement.style.transform = `scaleX(${progressRatio})`
+      loadingPercentageElement.textContent = `${(progressRatio * 100).toFixed(0)}%`;
+      if (progressRatio === 1) {
+        scene.add(controls.getObject())
+        console.log("Done Loading!")
+      }
+    } else {
+      return
+    }
+
+  }
+)
 
 // ENVIRONMENT
 rgbeLoader.load('/environments/kloofendal_48d_partly_cloudy_puresky_2k.hdr', (envMap) => {
