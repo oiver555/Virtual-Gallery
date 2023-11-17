@@ -5,6 +5,7 @@ import * as DAT from 'lil-gui'
 import * as CANNON from 'cannon-es'
 import CannonDebugger from 'cannon-es-debugger';
 import { PointerLockControlsCannon_Modified } from './PointerLockControlsCannon_Modified.js'
+import { gsap } from 'gsap/gsap-core';
 
 import './upload.js'
 
@@ -172,6 +173,7 @@ let trim_grp
 let iron_grid_grp
 let sphereBody
 let physicsMaterial
+let currPercentageValue = 0
 
 const timeStep = 1 / 60
 let lastCallTime = performance.now() / 1000
@@ -185,6 +187,29 @@ const sizes = {
 
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
 camera.position.y = 4.5
+
+//OVERLAY
+const overlayGeometery = new THREE.PlaneGeometry(2, 2, 1, 1,)
+const overlayMaterial = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms: {
+    uAlpha: { value: 1.0 }
+  },
+  vertexShader: `
+  void main () {
+    gl_Position = vec4(position, 1.0);
+  }`,
+  fragmentShader: `
+  uniform float uAlpha;
+  void main() {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+  }`
+})
+
+const overlay = new THREE.Mesh(overlayGeometery, overlayMaterial)
+scene.add(overlay)
+
+// camera.lookAt(overlay)
 
 //CANNON WORLD
 const cannonPhysics = new CANNON.World({
@@ -218,14 +243,6 @@ helper = new THREE.Mesh(geometryHelper, new THREE.MeshNormalMaterial());
 
 //LOADERS
 
-const loaderManager = new THREE.LoadingManager()
-const gltfLoader = new GLTFLoader(loaderManager)
-const textureLoader = new THREE.TextureLoader(loaderManager)
-const rgbeLoader = new RGBELoader(loaderManager)
-
-const loadingBarElement = document.querySelector(".loading-bar")
-const loadingPercentageElement = document.querySelector(".loading-percentage")
-
 const loadingManager = new THREE.LoadingManager(
   //Loaded
   () => {
@@ -255,6 +272,14 @@ const loadingManager = new THREE.LoadingManager(
 
   }
 )
+const gltfLoader = new GLTFLoader(loadingManager)
+const textureLoader = new THREE.TextureLoader(loadingManager)
+const rgbeLoader = new RGBELoader(loadingManager)
+
+const loadingBarElement = document.querySelector(".loading-bar")
+const loadingPercentageElement = document.querySelector(".loading-percentage")
+
+
 
 // ENVIRONMENT
 rgbeLoader.load('/environments/kloofendal_48d_partly_cloudy_puresky_2k.hdr', (envMap) => {
@@ -1439,7 +1464,7 @@ sphereBody = new CANNON.Body({
 })
 sphereBody.linearDamping = 0.9
 sphereBody.position.y = 8
-cannonPhysics.addBody(sphereBody)
+// cannonPhysics.addBody(sphereBody)
 
 
 
@@ -1448,7 +1473,7 @@ const controls = new PointerLockControlsCannon_Modified(camera, sphereBody, canv
 controls.enabled = true
 
 // controls.unlock()
-scene.add(controls.getObject())
+// scene.add(controls.getObject())
 
 
 // CANNON DEBUGGER
@@ -1480,27 +1505,6 @@ window.addEventListener('resize', () => {
 })
 
 
-//OVERLAY
-const overlayGeometery = new THREE.PlaneGeometry(2, 2, 1, 1,)
-const overlayMaterial = new THREE.ShaderMaterial({
-  transparent: true,
-  uniforms: {
-    uAlpha: { value: 1.0 }
-  },
-  vertexShader: `
-  void main () {
-    gl_Position = vec4(position, 1.0);
-  }`,
-  fragmentShader: `
-  uniform float uAlpha;
-  void main() {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
-  }`
-})
-const overlay = new THREE.Mesh(overlayGeometery, overlayMaterial)
-scene.add(overlay)
-
-camera.lookAt(overlay)
 
 
 const tick = () => {
