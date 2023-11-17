@@ -9,8 +9,6 @@ import { PointerLockControlsCannon_Modified } from './PointerLockControlsCannon_
 import './upload.js'
 
 const canvas = document.querySelector('canvas.webgl')
-//USER CODE
-// Get the file input element
 const fileInput = document.getElementById("fileInput");
 let image
 // Add a change event listener
@@ -53,13 +51,14 @@ const createPainting = async (selectedFile) => {
 
           const geo = new THREE.BoxGeometry(width * .005, height * .005, .5)
           const material = new THREE.MeshStandardMaterial({ map: texture });
+          console.log(material.color)
           currPainting = new THREE.Mesh(geo, material)
           currPainting.position.setY(height * .0025)
           currPainting.rotateY(Math.PI / 2)
+          currPainting.material.color.add(new THREE.Color(0xffff00))
           scene.add(currPainting)
-
           canvas.addEventListener('pointermove', onPointerMove);
-          canvas.addEventListener('click', movePainting)
+          canvas.addEventListener('click', handleSelection)
         },
         undefined,
         function (error) {
@@ -72,37 +71,52 @@ const createPainting = async (selectedFile) => {
   }
 }
 
-const movePainting = () => {
+const handleSelection = (event) => {
 
-  console.log(intersects[0].point)
-  const test = currPainting.clone()
-  scene.add(test)
-  test.position.copy(intersects[0].point)
+  const closestObject = intersects.reduce((minDistanceObj, currentObj) => {
+    return currentObj.distance < minDistanceObj.distance ? currentObj : minDistanceObj;
+  }, intersects[0]); // Set the initial value to the first object
 
-  canvas.removeEventListener('pointermove', onPointerMove)
-  canvas.removeEventListener('click', movePainting)
+  raycaster.setFromCamera(pointer, camera);
+  intersects = raycaster.intersectObjects(contactWalls)
+
+
+  if (closestObject.object.name === '' && currPainting === undefined) {
+  
+    currPainting = closestObject.object
+    currPainting.material.color.add(new THREE.Color(0xffff00))
+  }
+
+  // return
+  else if (currPainting instanceof THREE.Mesh) {
+    const clonedPainting = currPainting.clone()
+    scene.add(clonedPainting)
+    clonedPainting.position.copy(intersects[0].point)
+    clonedPainting.material.color = new THREE.Color(1,1,1)
+    contactWalls.push(clonedPainting)
+    scene.remove(currPainting)
+    currPainting = undefined
+  }
+
+  // canvas.removeEventListener('click', handleSelection)
 }
+
 
 const onPointerMove = (event) => {
 
   pointer.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
   pointer.y = - (event.clientY / renderer.domElement.clientHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
+  intersects = raycaster.intersectObjects(contactWalls)
 
-  // See if the ray from the camera into the world hits one of our meshes
-  intersects = raycaster.intersectObjects(contactWalls);
-
-  for (const intersect of intersects) {
-  
-    
+  // Constain Canvas to Pointer Coordinates
+  if (currPainting) {  
+    for (const intersect of intersects) {
       currPainting.position.set(0, 0, 0);
       currPainting.lookAt(intersect.face.normal);
-  
-      currPainting.position.copy(intersect.point);  
-    
+      currPainting.position.copy(intersect.point);
+    }
   }
-
-  // Toggle rotation bool for meshes that we clicked
 }
 
 // const repositionPainting = (painting) => {
@@ -199,7 +213,7 @@ const geometryHelper = new THREE.ConeGeometry(5, 5, 4);
 // geometryHelper.translate(0, 0, 0);
 geometryHelper.rotateX(Math.PI / 2);
 helper = new THREE.Mesh(geometryHelper, new THREE.MeshNormalMaterial());
-scene.add(helper);
+// scene.add(helper);
 
 
 //LOADERS
@@ -1335,25 +1349,25 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
 
     if (colorWall.name === "Color_Walls_01") {
       colorWall["children"][0].material = color_wall_01_material
-      contactWalls.push(colorWall)
+      // contactWalls.push(colorWall)
     } else if (colorWall.name === "Color_Walls_02") {
-      contactWalls.push(colorWall)
+      // contactWalls.push(colorWall)
       colorWall["children"][0].material = color_wall_02_material
-      contactWalls.push(colorWall)
+      // contactWalls.push(colorWall)
     } else if (colorWall.name === "Color_Walls_03") {
-      contactWalls.push(colorWall)
+      // contactWalls.push(colorWall)
       colorWall["children"][0].material = color_wall_03_material
     } else if (colorWall.name === "Color_Walls_04") {
-      contactWalls.push(colorWall)
+      // contactWalls.push(colorWall)
       colorWall["children"][0].material = color_wall_04_material
     } else if (colorWall.name === "Color_Walls_06") {
-      contactWalls.push(colorWall)
+      // contactWalls.push(colorWall)
       colorWall.material = color_wall_06_material
     } else if (colorWall.name === "Color_Walls_07") {
-      contactWalls.push(colorWall)
+      // contactWalls.push(colorWall)
       colorWall.material = color_wall_07_material
     } else if (colorWall.name === "Color_Walls_08") {
-      contactWalls.push(colorWall)
+      // contactWalls.push(colorWall)
       colorWall["children"][0].material = color_wall_08_material
     }
   });
@@ -1371,6 +1385,9 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
   })
 
   scene.add(iron_grid_grp, bench_grp, white_wall_grp, color_wall_grp, light_grp, stands_grp, floor_grp, trim_grp)
+
+  contactWalls.push(color_wall_grp, white_wall_grp)
+
   const floorBody = new CANNON.Body({
     type: CANNON.Body.STATIC,
     shape: new CANNON.Plane,
@@ -1395,16 +1412,16 @@ const controls = new PointerLockControlsCannon_Modified(camera, sphereBody, canv
 // const controls = new PointerLockControlsCannon(camera, sphereBody)
 controls.enabled = true
 
-controls.unlock()
+// controls.unlock()
 scene.add(controls.getObject())
 
 
 // CANNON DEBUGGER
-const cannonDebugger = new CannonDebugger(scene, cannonPhysics)
+// const cannonDebugger = new CannonDebugger(scene, cannonPhysics)
 
 const axesHelper = new THREE.AxesHelper(100);
 
-scene.add(axesHelper)
+// scene.add(axesHelper)
 
 //LIGHTS
 const ambLight = new THREE.AmbientLight()
@@ -1427,9 +1444,15 @@ window.addEventListener('resize', () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
+const fadein = () => {
+  
+}
 
 
 const tick = () => {
+
+
+
   const elapsedTime = clock.getElapsedTime()
   const time = performance.now() / 1000
   const dt = time - lastCallTime
@@ -1439,7 +1462,7 @@ const tick = () => {
     cannonPhysics.step(timeStep, dt)
 
   }
-  cannonDebugger.update()
+  // cannonDebugger.update()
 
   // cannonPhysics.fixedStep()
   controls.update(dt)
