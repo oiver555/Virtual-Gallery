@@ -20,6 +20,8 @@ fileInput.addEventListener("change", async (event) => {
 });
 
 let currPainting
+let currPainting_grp = new THREE.Group()
+
 const createPainting = async (selectedFile) => {
   if (selectedFile) {
     const img = new Image();
@@ -43,7 +45,6 @@ const createPainting = async (selectedFile) => {
           const url = URL.createObjectURL(data);
 
           // Create a texture loader
-          const textureLoader = new THREE.TextureLoader();
 
           // Load the texture from the blob URL
           const texture = textureLoader.load(url);
@@ -51,12 +52,12 @@ const createPainting = async (selectedFile) => {
 
           const geo = new THREE.BoxGeometry(width * .005, height * .005, .5)
           const material = new THREE.MeshStandardMaterial({ map: texture });
-          console.log(material.color)
           currPainting = new THREE.Mesh(geo, material)
-          currPainting.position.setY(height * .0025)
-          currPainting.rotateY(Math.PI / 2)
+          currPainting_grp.add(currPainting)
+          // currPainting_grp.position.setY(height * .0025)
+          // currPainting.rotateY(Math.PI / 2)
           currPainting.material.color.add(new THREE.Color(0xffff00))
-          scene.add(currPainting)
+          scene.add(currPainting_grp)
           canvas.addEventListener('pointermove', onPointerMove);
           canvas.addEventListener('click', handleSelection)
         },
@@ -80,22 +81,24 @@ const handleSelection = (event) => {
   raycaster.setFromCamera(pointer, camera);
   intersects = raycaster.intersectObjects(contactWalls)
 
+//Select Painting
+  if (closestObject.object.name === '' && currPainting_grp.children.length === 0) {
 
-  if (closestObject.object.name === '' && currPainting === undefined) {
-  
     currPainting = closestObject.object
     currPainting.material.color.add(new THREE.Color(0xffff00))
   }
 
   // return
   else if (currPainting instanceof THREE.Mesh) {
-    const clonedPainting = currPainting.clone()
-    scene.add(clonedPainting)
-    clonedPainting.position.copy(intersects[0].point)
-    clonedPainting.material.color = new THREE.Color(1,1,1)
-    contactWalls.push(clonedPainting)
-    scene.remove(currPainting)
-    currPainting = undefined
+    // const clonedPainting = currPainting.clone()
+    currPainting_grp.position.copy(intersects[0].point)
+
+    scene.add(currPainting)
+    currPainting_grp.position.set(new THREE.Vector3(0,0,0))
+    currPainting.material.color = new THREE.Color(1, 1, 1)
+    contactWalls.push(currPainting)
+    // scene.remove(currPainting)
+    // currPainting = undefined
   }
 
   // canvas.removeEventListener('click', handleSelection)
@@ -109,11 +112,11 @@ const onPointerMove = (event) => {
   intersects = raycaster.intersectObjects(contactWalls)
 
   // Constain Canvas to Pointer Coordinates
-  if (currPainting) {  
+  if (currPainting) {
     for (const intersect of intersects) {
-      currPainting.position.set(0, 0, 0);
-      currPainting.lookAt(intersect.face.normal);
-      currPainting.position.copy(intersect.point);
+      currPainting_grp.position.set(0, 0, 0);
+      currPainting_grp.lookAt(intersect.face.normal);
+      currPainting_grp.position.copy(intersect.point);
     }
   }
 }
@@ -148,6 +151,9 @@ camera.position.y = 4.5
 const overlayGeometery = new THREE.PlaneGeometry(2, 2, 1, 1,)
 const overlayMaterial = new THREE.ShaderMaterial({
   transparent: true,
+  depthTest: true,
+  depthWrite: false,
+  
   uniforms: {
     uAlpha: { value: 1.0 }
   },
@@ -158,12 +164,13 @@ const overlayMaterial = new THREE.ShaderMaterial({
   fragmentShader: `
   uniform float uAlpha;
   void main() {
-    gl_FragColor = vec4(1.0, 0.0, 0.0, uAlpha);
+    gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
   }`
 })
 const overlay = new THREE.Mesh(overlayGeometery, overlayMaterial)
+overlayMaterial.renderOrder = 1
 scene.add(overlay)
-camera.lookAt(overlay)
+// camera.lookAt(overlay)
 
 //CANNON WORLD
 const cannonPhysics = new CANNON.World({
@@ -187,21 +194,18 @@ const renderer = new THREE.WebGLRenderer({
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 let intersects = []
-let helper;
-const geometryHelper = new THREE.ConeGeometry(5, 5, 4);
-// geometryHelper.translate(0, 0, 0);
-geometryHelper.rotateX(Math.PI / 2);
-helper = new THREE.Mesh(geometryHelper, new THREE.MeshNormalMaterial());
-// scene.add(helper);
-
 
 //LOADERS
 const loadingManager = new THREE.LoadingManager(
   //Loaded
   () => {
-    console.log("dfaffewd")
-    gsap.delayedCall(0.5, () => {
-      // gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0 })
+    console.log("Done Loading!")
+    scene.add(controls.getObject()).onAfterRender(() => {
+      gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0.0 })
+
+    })
+
+    gsap.delayedCall(.5, () => {
       loadingBarElement.style.transform = ``
       loadingPercentageElement.style.opacity = 0
       loadingBarElement.classList.add('ended')
@@ -217,10 +221,7 @@ const loadingManager = new THREE.LoadingManager(
       currPercentageValue = progressRatio
       loadingBarElement.style.transform = `scaleX(${progressRatio})`
       loadingPercentageElement.textContent = `${(progressRatio * 100).toFixed(0)}%`;
-      if (progressRatio === 1) {
-        scene.add(controls.getObject())
-        console.log("Done Loading!")
-      }
+
     } else {
       return
     }
