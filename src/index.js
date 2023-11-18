@@ -53,6 +53,7 @@ const createPainting = async (selectedFile) => {
           const geo = new THREE.BoxGeometry(width * .005, height * .005, .5)
           const material = new THREE.MeshStandardMaterial({ map: texture });
           currPainting = new THREE.Mesh(geo, material)
+          contactWalls.push(currPainting)
           currPainting_grp.add(currPainting)
           // currPainting_grp.position.setY(height * .0025)
           // currPainting.rotateY(Math.PI / 2)
@@ -81,22 +82,36 @@ const handleSelection = (event) => {
   raycaster.setFromCamera(pointer, camera);
   intersects = raycaster.intersectObjects(contactWalls)
 
-//Select Painting
+  //Select Painting
   if (closestObject.object.name === '' && currPainting_grp.children.length === 0) {
 
     currPainting = closestObject.object
+
     currPainting.material.color.add(new THREE.Color(0xffff00))
+    const worldPOS = new THREE.Vector3()
+    currPainting.getWorldPosition(worldPOS)
+    currPainting.position.set(0,0,0)
+    currPainting_grp.add(currPainting)
+    currPainting_grp.position.copy(worldPOS)   
+
+    // currPainting_grp.position.copy(currPainting.position)
+
+    // const offset = new THREE.Vector3()
+    // offset.subVectors()
   }
 
-  // return
-  else if (currPainting instanceof THREE.Mesh) {
+  // Plot Painting
+  else if (currPainting instanceof THREE.Mesh && currPainting_grp.children.length > 0) {
     // const clonedPainting = currPainting.clone()
     currPainting_grp.position.copy(intersects[0].point)
-
     scene.add(currPainting)
-    currPainting_grp.position.set(new THREE.Vector3(0,0,0))
+    currPainting.position.copy(currPainting_grp.position)
+    currPainting.rotation.copy(currPainting_grp.rotation)
+    console.log(currPainting.geometry.attributes, intersects[0].face.normal)
+    // currPainting.geometry.attributes.normal  = intersects[0].face.normal
+    currPainting_grp.position.set(0,0,0)
     currPainting.material.color = new THREE.Color(1, 1, 1)
-    contactWalls.push(currPainting)
+   
     // scene.remove(currPainting)
     // currPainting = undefined
   }
@@ -112,10 +127,13 @@ const onPointerMove = (event) => {
   intersects = raycaster.intersectObjects(contactWalls)
 
   // Constain Canvas to Pointer Coordinates
-  if (currPainting) {
+  if (currPainting_grp.children.length > 0) {
+   
+
     for (const intersect of intersects) {
       currPainting_grp.position.set(0, 0, 0);
       currPainting_grp.lookAt(intersect.face.normal);
+      currPainting.lookAt(intersect.face.normal);
       currPainting_grp.position.copy(intersect.point);
     }
   }
@@ -151,9 +169,7 @@ camera.position.y = 4.5
 const overlayGeometery = new THREE.PlaneGeometry(2, 2, 1, 1,)
 const overlayMaterial = new THREE.ShaderMaterial({
   transparent: true,
-  depthTest: true,
-  depthWrite: false,
-  
+
   uniforms: {
     uAlpha: { value: 1.0 }
   },
@@ -168,7 +184,6 @@ const overlayMaterial = new THREE.ShaderMaterial({
   }`
 })
 const overlay = new THREE.Mesh(overlayGeometery, overlayMaterial)
-overlayMaterial.renderOrder = 1
 scene.add(overlay)
 // camera.lookAt(overlay)
 
@@ -200,10 +215,8 @@ const loadingManager = new THREE.LoadingManager(
   //Loaded
   () => {
     console.log("Done Loading!")
-    scene.add(controls.getObject()).onAfterRender(() => {
-      gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0.0 })
-
-    })
+    scene.add(controls.getObject())
+    overlayMaterial.uniforms.uAlpha = 0.0
 
     gsap.delayedCall(.5, () => {
       loadingBarElement.style.transform = ``
@@ -215,7 +228,6 @@ const loadingManager = new THREE.LoadingManager(
   //Progress
   (itemsURL, itemsLoaded, itemsTotal) => {
     const progressRatio = itemsLoaded / itemsTotal
-    console.log(progressRatio)
     if (progressRatio > currPercentageValue) {
       currPercentageValue = progressRatio
       currPercentageValue = progressRatio
@@ -279,7 +291,7 @@ const white_wall_lightmap_00 = textureLoader.load('./models/gltf/Azul_36/Azul_36
 const white_wall_lightmap_01 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_01_White_Wall_Shape1.jpg')
 const white_wall_lightmap_02 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_02_White_Wall_02Shape.jpg')
 const white_wall_lightmap_03 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_03_White_Wall_Shape3.jpg')
-const white_wall_lightmap_04 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_04_White_Wall_04Shape.jpg')
+const white_wall_lightmap_04 = textureLoader.load('./models/gltf/Azul_36/Azul_40__White_Wall_grp_White_Wall_04_White_Wall_Shape4.jpg')
 const white_wall_lightmap_05 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_05_White_Wall_Shape5.jpg')
 const white_wall_lightmap_06 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_white_Wall_06_white_Wall_Shape6.jpg')
 const white_wall_lightmap_07 = textureLoader.load('./models/gltf/Azul_36/Azul_36__White_Wall_grp_White_Wall_07_White_Wall_07Shape.jpg')
@@ -1331,7 +1343,7 @@ gltfLoader.load('./models/gltf/Azul_36/Azul_01.gltf', (gltf) => {
 
     if (wall.name === "White_Wall_00") {
 
-      // wall["children"][0].material = white_wall_00_material
+      wall["children"][0].material = white_wall_00_material
     } else if (wall.name === "White_Wall_01") {
       wall.material = white_wall_01_material
     } else if (wall.name === "White_Wall_02") {
